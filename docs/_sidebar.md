@@ -1,0 +1,50 @@
+* 简介
+  * [简介](md/test.md)
+* 编程语言(PHP,Go)
+  * PHP
+    * [swoole]
+      * [1.swoole入门](md/swoole/swoole入门.md)
+      * [2.swoole框架重启](md/swoole/swoole框架重启.md)
+      * [3.thinkphp运行在swoole中](https://segmentfault.com/a/1190000040994139)
+      * [4.swoole异步任务task](https://segmentfault.com/a/1190000040659266)
+      * [5.swoole客户端分析与经验](https://segmentfault.com/a/1190000040978122)
+    * [php积累]
+      * [1.php基础函数积累](md/php/php函数积累.md)
+      * [2.工具类](md/php/工具类.md)
+      * [3.PHP基础知识积累](md/php/PHP基础知识积累.md)
+      * [4.代码书写规范](md/php/代码书写规范.md)
+      * [5.elasicSearch](md/php/elasicSearch.md)
+      * [6.nginx和php通信过程](md/php/nginx和php通信过程.md) 
+      * [7.封转好的常用函数](md/php/封转好的常用函数.md)
+      * [8.接口签名公钥和私钥](md/php/接口签名公钥和私钥.md)
+  * [GO]
+    * [1.GO大文件(G级别文件)上传实现](md/功能开发/design-doc/backend/大文件上传技术文档.md)
+    * [2.基本语法](md/go/基本语法/基本语法.md)
+    * [3.Context包解析](md/go/context包.md)
+* 服务架构(linux,docker,nginx...)
+  * [linux]
+    * [1.linux知识](md/Linux/linux知识.md)
+    * [2.生产注意的问题](md/Linux/生产注意的问题.md)
+    * [3.supervisor使用](md/Linux/supervisor.md)
+  * [nginx]
+    * [1.nginx](md/Linux/nginx.md)
+  * [docker]
+    * [1.docker](md/Linux/docker.md)
+* 数据库
+  * [mysql]
+    * [1.mysql基础知识](md/mysql/mysql基础知识.md)
+    * [2.mysql优化](md/mysql/mysql优化.md)
+    * [3.锁和事务](md/mysql/锁和事务.md)
+    * [4.数据库创建只读用户](md/mysql/数据库创建只读用户.md)
+    * [5.sql语句练习题](md/mysql/sql语句练习题.md)
+* 数据结构和算法
+  * [基础知识](md/数据结构和算法/数据结构和算法.md)
+  * [常见面试题](md/数据结构和算法/常见面试题.md)
+* 网络
+  * [http](md/网络/HTTP协议和https协议.md)
+  * [tcp/ip](md/网络/TCP--IP协议.md)
+  * [tcp](md/网络/tcp协议可靠性原理.md)
+* 杂项
+  * [网站安全](md/网站安全.md)
+  * [计算机基础知识](md/计算机基础知识.md)
+  * [操作系统](md/操作系统.md)
