@@ -419,7 +419,16 @@ shell>docker run -dit centos /bin/bash
 添加-it 参数交互运行
 添加-d 参数后台运行
 这样就能启动一个一直停留在后台运行的Centos了。
+
+
+
 ```
+
+
+
+### 5.5 查看所有容易的容器ip地址
+
+docker ps -q | xargs -n 1 docker inspect --format '{{.Name}} - {{.NetworkSettings.IPAddress}}' 
 
 
 
