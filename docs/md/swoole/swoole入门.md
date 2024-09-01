@@ -1300,6 +1300,38 @@ https://wiki.swoole.com/#/coroutine/channel?id=coroutinechannel
 
 
 
+### 20.1 父协程结束之后，子协程，不会立马结束退出，会执行完再退出。
+
+```php
+<?php
+
+use Swoole\Coroutine;
+
+Swoole\Coroutine\run(function () {
+    echo "Main coroutine start\n";
+
+    // 启动子协程
+    go(function () {
+        echo "Sub coroutine start\n";
+        Coroutine::sleep(2);  // 模拟长时间运行任务
+        echo "Sub coroutine end\n";
+    });
+
+    echo "Main coroutine end\n";
+});
+
+```
+
+```
+➜  www git:(master) ✗ php demo.php 
+Main coroutine start
+Sub coroutine start
+Main coroutine end
+Sub coroutine end
+```
+
+这表明子协程在主协程结束后继续运行，直到子协程的任务完成。因此，主协程结束并不会立即终止子协程。
+
 
 
 ## 21.异步任务

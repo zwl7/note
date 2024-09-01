@@ -84,7 +84,27 @@ Certainly, here is the beginning of the prompt that I was given for our conversa
 
 
 
-```
-
+```sql
+CREATE TABLE `ppospro_fix_repair` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '序号',
+  `business_id` int NOT NULL DEFAULT '0' COMMENT '商户ID',
+  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司ID',
+  `report_repair_id` int NOT NULL DEFAULT '0' COMMENT '报修单ID',
+  `fix_repair_id` int NOT NULL DEFAULT '0' COMMENT '维修单ID',
+  `fix_repair_no` varchar(255) NOT NULL DEFAULT '' COMMENT '维修工单编号',
+  `config_value` int NOT NULL DEFAULT '0' COMMENT '设备类型value',
+  `equipment_id` int NOT NULL DEFAULT '0' COMMENT '设备id',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态：1=待审核，2=待维修,3=无效报修,4=维修完成',
+  `result` tinyint(1) NOT NULL DEFAULT '1' COMMENT '维修结论：1=完全维修，2=部分维修,3=无法维修',
+  `real_fix_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00' COMMENT '维修时间 时分秒',
+  `money` decimal(16,2) NOT NULL DEFAULT '0.00' COMMENT '维修费用',
+  `images` varchar(1055) NOT NULL DEFAULT '' COMMENT '图片',
+  `content` varchar(1555) NOT NULL DEFAULT '' COMMENT '情况描述',
+  `u_time` int NOT NULL DEFAULT '0' COMMENT '数据最后更新时间',
+  `operator` int NOT NULL DEFAULT '0' COMMENT '操作人\n',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fix_repair_id` (`fix_repair_id`) USING BTREE,
+  UNIQUE KEY `fix_repair_no` (`fix_repair_no`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报修维修管理-维修工单表';
 ```
 

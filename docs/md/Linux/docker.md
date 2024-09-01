@@ -2005,6 +2005,22 @@ CMD ["/app/start.sh", "-d"] # 容器run起来时，会执行的命令
 
 
 
+## 28mysql和redis 最好不要用docker,mq elasicSearch 这些服务呢待确认
+
+
+
+redis节点因为某些原因自己挂掉了，被docker-swarm重新启动了一个新的容器，然后新容器的网络ip变了，导致很多web服务，访问
+
+redis时网络不通了。可能出现这个情况，所以redis最好也不要使用docker部署。而且docker部署，redis效率比原生的redis效率慢(//待测试 docker部署的redis 和 原生的redis，效率差多少？
+
+
+
+
+
+
+
+
+
 
 
 

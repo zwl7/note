@@ -82,21 +82,120 @@ SELECT识别符。这是SELECT的查询序列号
 
 对表访问方式，表示MySQL在表中找到所需行的方式，又称“访问类型”。
 
-常用的类型有： **ALL、index、range、 ref、eq_ref、const、system、NULL（从左到右，性能从差到好）**
+在 `EXPLAIN` 结果中，`type` 列描述了MySQL找到行的方式，也被称为访问类型（Access Type）。不同的 `type` 值表示查询优化器选择的不同的执行计划，访问类型的效率从好到坏大致如下：
 
-ALL：Full Table Scan， MySQL将遍历全表以找到匹配的行
+1. **system**：表只有一行（系统表）。这是一个特殊的情况，通常不出现。
+2. **const**：查询使用主键或唯一索引，且该索引字段的所有部分都使用常量值进行比较。对于单行查询非常快。
+3. **eq_ref**：对于连接查询，每次从驱动表中读取一行数据，都会在被驱动表中通过主键或唯一索引查找一行数据。
+4. **ref**：非唯一索引查找，返回符合条件的所有行。多用于带有索引的列上，且不唯一。
+5. **range**：索引范围扫描，通常用于带有 `BETWEEN`、`<`、`>`、`IN` 等范围查询的索引列上。
+6. **index**：全索引扫描，与全表扫描类似，但扫描的是索引树而不是数据行。
+7. **ALL**：全表扫描，效率最差，通常需要避免。
 
-index: Full Index Scan，index与ALL区别为index类型只遍历索引树
+##### 具体例子
 
-range:只检索给定范围的行，使用一个索引来选择行
+#### 1. **system**
 
-ref: 表示上述表的连接匹配条件，即哪些列或常量被用于查找索引列上的值
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM single_row_table;
+plaintext
+复制代码
+id  select_type  table            type     possible_keys  key     key_len  ref    rows  Extra
+1   SIMPLE       single_row_table system  NULL           NULL    NULL     NULL   1     const row
+```
 
-eq_ref: 类似ref，区别就在使用的索引是唯一索引，对于每个索引键值，表中只有一条记录匹配，简单来说，就是多表连接中使用primary key或者 unique key作为关联条件
+`system` 类型通常用于只有一行数据的系统表。
 
-const、system: 当MySQL对查询某部分进行优化，并转换为一个常量时，使用这些类型访问。如将主键置于where列表中，MySQL就能将该查询转换为一个常量，system是const类型的特例，当查询的表只有一行的情况下，使用system
+#### 2. **const**
 
-NULL: MySQL在优化过程中分解语句，执行时甚至不用访问表或索引，例如从一个索引列里选取最小值可以通过单独索引查找完成。
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM users WHERE user_id = 1;
+plaintext
+复制代码
+id  select_type  table  type   possible_keys  key       key_len  ref   rows  Extra
+1   SIMPLE       users  const  PRIMARY        PRIMARY   4        const 1     const row not found
+```
+
+`const` 表示使用了主键或唯一索引，并且索引列使用常量值来查找。
+
+#### 3. **eq_ref**
+
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM orders INNER JOIN users ON orders.user_id = users.user_id;
+plaintext
+复制代码
+id  select_type  table   type    possible_keys  key           key_len  ref           rows  Extra
+1   SIMPLE       orders  ALL     PRIMARY        NULL          NULL     NULL          1000  Using where
+1   SIMPLE       users   eq_ref  PRIMARY        PRIMARY       4        orders.user_id 1     Using index
+```
+
+`eq_ref` 表示连接操作中使用了主键或唯一索引，并且每次查找只返回一行。
+
+#### 4. **ref**
+
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM users WHERE name = 'John';
+plaintext
+复制代码
+id  select_type  table  type  possible_keys  key      key_len  ref    rows  Extra
+1   SIMPLE       users  ref   idx_name       idx_name 767      const  10    Using where
+```
+
+`ref` 表示使用非唯一索引查找所有符合条件的行。
+
+#### 5. **range**
+
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM users WHERE user_id BETWEEN 1 AND 10;
+plaintext
+复制代码
+id  select_type  table  type   possible_keys  key      key_len  ref    rows  Extra
+1   SIMPLE       users  range  PRIMARY        PRIMARY  4        NULL   10    Using where
+```
+
+`range` 表示索引范围扫描。
+
+#### 6. **index**
+
+```
+sql
+复制代码
+EXPLAIN SELECT name FROM users;
+plaintext
+复制代码
+id  select_type  table  type  possible_keys  key      key_len  ref    rows  Extra
+1   SIMPLE       users  index NULL           idx_name 767      NULL   1000  Using index
+```
+
+`index` 表示全索引扫描。
+
+#### 7. **ALL**
+
+```
+sql
+复制代码
+EXPLAIN SELECT * FROM users;
+plaintext
+复制代码
+id  select_type  table  type  possible_keys  key  key_len  ref  rows  Extra
+1   SIMPLE       users  ALL   NULL           NULL NULL     NULL 1000  Using where
+```
+
+`ALL` 表示全表扫描，是效率最低的访问类型。
+
+### 总结
+
+每种类型的访问方式都有不同的应用场景和性能特征。在实际开发中，尽量避免使用 `ALL` 类型的全表扫描，可以通过合理设计索引和优化查询来提升性能。
 
  
 
@@ -173,3 +272,46 @@ No tables used：Query语句中使用from dual 或不含任何from子句
 **• 部分统计信息是估算的，并非精确值**
 
 **• EXPALIN只能解释SELECT操作，其他操作要重写为SELECT后查看执行计划。**
+
+
+
+
+
+```sql
+CREATE TABLE `ppospro_qrcode` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '序号',
+  `business_id` int NOT NULL COMMENT '商户ID',
+  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司ID',
+  `qrcode_id` int NOT NULL COMMENT '二维码ID',
+  `equipment_id` int NOT NULL COMMENT '设备ID',
+  `qrcode_no` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码编号',
+  `qrcode_url` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码编号url',
+  `content` varchar(255) NOT NULL DEFAULT '' COMMENT '内容',
+  `bind_status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '绑定状态：0未绑定，1已绑定,默认0',
+  `bind_time` int NOT NULL DEFAULT '0' COMMENT '二维码绑定时间',
+  `c_time` int NOT NULL DEFAULT '0' COMMENT '数据录入时间',
+  `u_time` int NOT NULL DEFAULT '0' COMMENT '数据最后更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `qrcode_id` (`equipment_qrcode_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='二维码管理表';
+```
+
+```sql
+//
+CREATE TABLE `ppospro_qrcode_batch` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '序号',
+  `business_id` int NOT NULL DEFAULT '0' COMMENT '商户ID',
+  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司ID',
+  `qrcode_batch_id` int NOT NULL DEFAULT '0' COMMENT '二维码ID',
+  `qrcode_batch_no` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码批次号',
+  `qrcode_batch_name` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码批次名称',
+  `bind_count` int NOT NULL DEFAULT '0' COMMENT '已绑定数量',
+  `no_bind_count` int NOT NULL DEFAULT '0' COMMENT '未绑定数量',
+  `qrcode_create_time` int NOT NULL DEFAULT '0' COMMENT '编码生成时间',
+  `c_time` int NOT NULL DEFAULT '0' COMMENT '数据录入时间',
+  `u_time` int NOT NULL DEFAULT '0' COMMENT '数据最后更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `qrcode_batch_id` (`qrcode_batch_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='设备资产管理-二维码批次表';
+```
+
