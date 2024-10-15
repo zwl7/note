@@ -24,3 +24,33 @@ function createOnlyID()
 $uuid = createOnlyID();
 ```
 
+
+
+```
+"require": {
+    "godruoyi/php-snowflake": "2.2.4"
+}
+```
+
+```php
+require "./vendor/autoload.php";
+
+
+$array = [];
+var_dump(microtime(true));
+for ($i = 0; $i <1000; $i++) {
+    $SnowflakeId = (new \Godruoyi\Snowflake\Snowflake())->setStartTimeStamp(1443369600000)->id();
+    $array[] = $SnowflakeId;
+    usleep(200);
+}
+var_dump(microtime(true));
+var_dump(count(array_unique($array)));
+var_dump($array);
+```
+
+float(1727675447.4757)
+float(1727675447.7341)
+int(1000)
+array(1000) {
+  [0]=>
+  string(19) "1192465153287784833"

@@ -1088,7 +1088,7 @@ int快一点，没有快很多，int快10%而已。
 
 c_time 是int， u_time 是datetime
 
--- 0.860
+-- 0.860 
 SELECT count(*) from users where u_time > '2024-05-05 20:55:56'
 
 -- 0.054
@@ -1289,3 +1289,558 @@ CREATE TABLE example_table (
 
 `ROW_FORMAT=DYNAMIC` 是一种行格式类型，适用于需要处理大字段的表。它通过将大字段存储在溢出页中，减少主数据页的大小，从而提高性能。选择合适的行格式可以优化表的存储和访问性能，根据具体需求选择行格式是数据库设计的重要部分。
 
+
+
+## 39 存储位置数据(经纬度)
+
+### 1.使用point 格式存储经纬度
+
+
+
+### 2.使用decimal来存储
+
+**使用 `DECIMAL` 或 `DOUBLE` 类型存储**
+
+这是最常用的方法，适合需要手动处理经纬度数据的情况。经纬度是数值，通常使用 `DECIMAL` 或 `DOUBLE` 类型来存储，具体取决于精度要求。
+
+#### 具体示例：
+
+- **纬度**（Latitude）：范围从 -90 到 +90。
+- **经度**（Longitude）：范围从 -180 到 +180。
+
+在使用 `DECIMAL` 数据格式存储经纬度时，设置字段的精度非常重要。经纬度的值需要足够的精度来确保准确性，尤其是当你在处理全球范围内的位置数据时。
+
+### 经纬度的常见取值范围：
+
+- **纬度**（Latitude）：从 -90 到 +90。
+- **经度**（Longitude）：从 -180 到 +180。
+
+通常，经纬度小数点后最多保留 8 位精度，以确保数据足够准确，适用于大多数应用场景。以下是如何设置 `DECIMAL` 类型的字段精度：
+
+#### 1. **选择精度的原则**
+
+- 经度（Longitude）
+
+  ：最大值为 180.00000000，因此使用 
+
+  ```
+  DECIMAL(11, 8)
+  ```
+
+   是常见选择，其中：
+
+  - 11 表示总的位数。
+  - 8 表示小数部分的位数（小数点后保留 8 位）。
+
+- 纬度（Latitude）
+
+  ：最大值为 90.00000000，因此使用 
+
+  ```
+  DECIMAL(10, 8)
+  ```
+
+  ，其中：
+
+  - 10 表示总的位数。
+  - 8 表示小数部分的位数。
+
+保留 8 位小数足以在大多数应用场景中提供亚米级别的精度。
+
+#### 2. **DECIMAL 字段精度建议**
+
+- **经度（Longitude）：DECIMAL(11, 8)**
+  - 范围：-180.00000000 到 +180.00000000
+  - 解释：总共 11 位数字，其中 8 位是小数点后的部分，3 位是小数点前的整数部分。
+- **纬度（Latitude）：DECIMAL(10, 8)**
+  - 范围：-90.00000000 到 +90.00000000
+  - 解释：总共 10 位数字，其中 8 位是小数点后的部分，2 位是小数点前的整数部分。
+
+#### 示例：
+
+```
+sql
+
+
+复制代码
+CREATE TABLE locations (
+    location_id INT AUTO_INCREMENT PRIMARY KEY,
+    latitude DECIMAL(10, 8) NOT NULL,   -- 纬度
+    longitude DECIMAL(11, 8) NOT NULL   -- 经度
+);
+```
+
+#### 3. **关于精度的计算**
+
+每个小数位对应的物理距离（在赤道附近）：
+
+- 小数点后 4 位（如 `0.0001`）：大约是 11.1 米的精度。
+- 小数点后 5 位（如 `0.00001`）：大约是 1.11 米的精度。
+- 小数点后 6 位（如 `0.000001`）：大约是 0.11 米的精度（即 11 厘米）。
+- 小数点后 7 位（如 `0.0000001`）：大约是 1.11 厘米的精度。
+- 小数点后 8 位（如 `0.00000001`）：大约是 1.11 毫米的精度。
+
+因此，`DECIMAL(10, 8)` 和 `DECIMAL(11, 8)` 保证了小数点后 8 位的精度，足以覆盖大多数需要高精度的位置数据场景。
+
+#### 总结：
+
+- **经度字段**：使用 `DECIMAL(11, 8)`。
+- **纬度字段**：使用 `DECIMAL(10, 8)`。
+
+这将提供高精度的经纬度存储，适合全球定位的绝大多数应用场景。
+
+
+
+
+
+### 实战
+
+```sql
+
+CREATE TABLE `locations` (
+  `location_id` int NOT NULL AUTO_INCREMENT,
+  `coordinates` point NOT NULL,
+  `lat` DECIMAL(9, 6) NOT NULL,  -- 纬度，范围从 -90 到 90，精度为 6 位小数
+  `lng` DECIMAL(9, 6) NOT NULL, -- 经度，范围从 -180 到 180，精度为 6 位小数
+  PRIMARY KEY (`location_id`),
+  SPATIAL KEY `coordinates` (`coordinates`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+//写入
+INSERT INTO `locations` (coordinates, lat, lng)
+SELECT 
+    ST_GeomFromText(CONCAT('POINT(',
+        -122.419416 + (RAND() * 0.162 - 0.081), -- 随机经度（9000米约为0.081度）
+        ' ',
+        37.774929 + (RAND() * 0.162 - 0.081),  -- 随机纬度（9000米约为0.081度）
+    ')')),
+    ROUND(37.774929 + (RAND() * 0.162 - 0.081), 6),  -- 随机纬度
+    ROUND(-122.419416 + (RAND() * 0.162 - 0.081), 6) -- 随机经度
+FROM (
+    SELECT 1 AS dummy
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    -- 通过重复选择来生成更多的行
+) AS t1, (
+    SELECT 1 AS dummy
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+    UNION ALL SELECT 1
+) AS t2
+LIMIT 1000;
+
+
+
+-- 找出POINT(-122.419416 37.774929)点内 6000米范围内的所有点位，并且根据距离，由近到远进行排序返回
+
+//point 格式
+SELECT 
+    location_id, 
+    ST_Distance_Sphere(coordinates, ST_GeomFromText('POINT(-122.419416 37.774929)')) AS distance
+FROM 
+    locations
+  -- HAVING distance <= 6000
+ORDER BY 
+    distance ASC;
+
+// decimal 格式
+SELECT
+	location_id, 
+	ST_Distance_Sphere (
+		POINT ( lng, lat ),
+	POINT (-122.419416, 37.774929)) AS distance 
+FROM
+	locations 
+-- HAVING distance < 6000 
+ORDER BY
+	distance ASC 
+	
+	
+	// 使用where条件过滤
+	SELECT
+	location_id, 
+	ST_Distance_Sphere (
+		POINT ( lng, lat ),
+	POINT (-122.419416, 37.774929)) AS distance 
+FROM
+	locations 
+ where ST_Distance_Sphere (
+		POINT ( lng, lat ),
+	POINT (-122.419416, 37.774929)) < 6000 
+ORDER BY
+	distance ASC 
+	
+	
+	
+1	SELECT * ,ST_Distance_Sphere(POINT(lng,lat), POINT(114.467936,30.47369)) AS distance FROM train WHERE (is_del = 0) HAVING ST_Distance_Sphere(POINT(lng,lat), POINT(114.467936,30.47369)) < 5000 ORDER BY distance DESC LIMIT 10
+
+2 SELECT * ,ST_Distance_Sphere(POINT(lng,lat), POINT(114.467936,30.47369)) AS distance FROM train WHERE (is_del = 0) HAVING distance < 5000 ORDER BY distance DESC LIMIT 10
+
+
+3 SELECT * ,ST_Distance_Sphere(POINT(lng,lat), POINT(114.467936,30.47369)) AS distance FROM train WHERE (is_del = 0) and  ST_Distance_Sphere(POINT(lng,lat), POINT(114.467936,30.47369)) < 5000 ORDER BY distance DESC LIMIT 10
+
+第3种效率更高，因为在搜索条件时就已经过滤了很多不符合条件的参数。
+```
+
+
+
+## 40 mysql使用中文分词
+
+## 
+
+**分词** 是将连续的文本字符串切分成有意义的词语序列的过程。在自然语言处理（NLP）中，分词是文本分析的基础步骤之一。对于英文等以空格分隔的语言，分词相对简单；但对于中文、日文、韩文等语言，由于词语之间没有明显的分隔符，分词变得更加复杂。
+
+在数据库中，尤其是 MySQL 中，分词对于实现高效的全文搜索（Full-Text Search）至关重要。MySQL 8.0 引入了多种分词器（Tokenizer），其中 **ngram 分词器** 是处理中文等语言的主要工具。
+
+#### MySQL 8.0 中的分词器
+
+MySQL 8.0 支持多种全文分词器，主要包括：
+
+1. **默认分词器（InnoDB Full-Text Parser）**：适用于英文等以空格分隔的语言。
+2. **ngram 分词器**：适用于中文、日文、韩文等没有明显分隔符的语言。
+3. **MeCab 分词器**（需要额外安装）：适用于日文等语言。
+
+在处理中文时，**ngram 分词器** 是最常用的选择。
+
+#### ngram 分词器
+
+**ngram 分词器** 将文本分割成固定长度的字符序列（n-gram）。对于中文，每个字符通常表示一个汉字，因此 ngram 分词器可以有效地对中文文本进行分词。
+
+#### 配置 ngram 分词器
+
+在 MySQL 8.0 中，配置 ngram 分词器涉及以下几个步骤：
+
+1. **设置 `ngram_token_size`**：
+
+   `ngram_token_size` 决定了分词时的字符块大小。对于中文，通常设置为 2 或 3。
+
+   ```
+   sql
+   
+   
+   复制代码
+   SET GLOBAL ngram_token_size = 2;
+   ```
+
+   你也可以在创建表时指定分词器和相关参数。
+
+2. **创建全文索引时指定分词器**：
+
+   ```
+   sql
+   
+   
+   复制代码
+   CREATE TABLE articles (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     title VARCHAR(255),
+     body TEXT,
+     FULLTEXT KEY ft_title_body (title, body) WITH PARSER ngram
+   ) ENGINE=InnoDB;
+   ```
+
+3. **修改已有表的全文索引**：
+
+   如果表已经存在，可以通过以下方式修改全文索引以使用 ngram 分词器：
+
+   ```
+   sql
+   
+   
+   复制代码
+   ALTER TABLE articles DROP INDEX ft_title_body,
+     ADD FULLTEXT KEY ft_title_body (title, body) WITH PARSER ngram;
+   ```
+
+#### 示例：使用 ngram 分词器进行中文全文搜索
+
+假设我们有一个 `articles` 表，仅包含 `title` 字段，并希望使用 ngram 分词器进行中文搜索和分页。
+
+```
+sql
+
+
+复制代码
+-- 创建表并使用 ngram 分词器
+CREATE TABLE articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255),
+  FULLTEXT KEY ft_title (title) WITH PARSER ngram
+) ENGINE=InnoDB;
+
+-- 插入示例数据
+INSERT INTO articles (title) VALUES
+('MySQL 8.0 中文分词搜索'),
+('使用 FULLTEXT 索引进行全文搜索'),
+('如何使用分词器优化搜索效果'),
+('通过 MySQL 实现高效的文本搜索'),
+('分词器在数据库中的应用');
+
+-- 执行中文全文搜索并分页
+SELECT * FROM articles
+WHERE MATCH(title) AGAINST('分词搜索' IN NATURAL LANGUAGE MODE)
+LIMIT 0, 10;  -- 第1页，每页10条
+```
+
+#### 分词器的工作原理
+
+以 `ngram_token_size = 2` 为例，"分词搜索" 这个词组会被分割成以下 2-gram：
+
+- 分词
+- 词搜
+- 搜索
+
+这样，在进行全文搜索时，MySQL 会匹配这些 2-gram，从而提高搜索的准确性和覆盖率。
+
+#### 优化分词效果
+
+1. **调整 `ngram_token_size`**：
+
+   根据具体业务需求，调整 `ngram_token_size` 可以影响搜索的粒度。较小的 token size 提高了匹配的灵活性，但可能增加噪音；较大的 token size 提高了精确度，但可能漏掉部分相关结果。
+
+   ```
+   sql
+   
+   
+   复制代码
+   SET GLOBAL ngram_token_size = 3;
+   ```
+
+2. **最小分词长度**：
+
+   可以设置 `innodb_ft_min_token_size` 来控制最小的 token 长度，进一步优化搜索效果。
+
+   ```
+   sql
+   
+   
+   复制代码
+   SET GLOBAL innodb_ft_min_token_size = 2;
+   ```
+
+3. **停用词（Stopwords）**：
+
+   MySQL 支持停用词列表，避免某些常见但无意义的词影响搜索结果。可以自定义停用词列表以适应中文环境。
+
+#### 分词器的限制
+
+1. **固定长度的分词**：
+
+   ngram 分词器使用固定长度的字符块进行分词，这在某些情况下可能导致分词不准确。例如，对于较长的词语，可能需要更大的 token size。
+
+2. **性能考虑**：
+
+   增加分词粒度（较小的 `ngram_token_size`）会增加索引的大小和搜索时的计算量，可能影响查询性能。因此，需要在准确性和性能之间找到平衡点。
+
+3. **缺乏语义理解**：
+
+   ngram 分词器仅基于字符级别的分割，缺乏对语义的理解，可能无法准确捕捉多义词或上下文相关的词义。
+
+#### 其他分词器选项
+
+除了 ngram 分词器，MySQL 还支持其他分词器，尽管它们可能需要额外的配置或插件。例如：
+
+- **MeCab 分词器**：适用于日文，可以提供更准确的分词效果，但需要额外安装和配置。
+- **自定义分词器**：通过插件机制，开发者可以实现自定义的分词逻辑，以满足特定的业务需求。
+
+#### 实践中的最佳实践
+
+1. **选择合适的 `ngram_token_size`**：
+
+   根据业务需求和数据特点，选择合适的分词粒度。对于大多数中文应用，2-gram 或 3-gram 是常见的选择。
+
+2. **优化索引**：
+
+   仅对需要进行全文搜索的字段创建 `FULLTEXT` 索引，避免不必要的索引增加存储和维护成本。
+
+3. **结合其他搜索技术**：
+
+   对于复杂的搜索需求，可以考虑将 MySQL 的全文搜索与其他搜索引擎（如 Elasticsearch、Sphinx 等）结合使用，以获得更强大的搜索功能。
+
+4. **监控和调优**：
+
+   定期监控全文搜索的性能和准确性，根据实际情况调整分词器参数和索引设置。
+
+#### 总结
+
+MySQL 8.0 提供了强大的全文搜索功能，尤其通过 **ngram 分词器**，可以有效地处理中文等非空格分隔的语言。通过合理配置分词器参数和索引设置，可以实现高效且准确的分词搜索。然而，分词器的选择和配置需要根据具体的业务需求和数据特点进行调整，以平衡搜索准确性和系统性能。
+
+
+
+
+
+```sql
+查询配置
+show VARIABLES LIKE "ngram_token_size"
+show VARIABLES LIKE "innodb_ft_min_token_size"
+
+
+CREATE TABLE articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255)
+) ENGINE=InnoDB;
+
+// 插入分词列的全文索引，并且使用ngram处理中文分词
+ALTER TABLE articles ADD FULLTEXT INDEX(title) WITH PARSER ngram;
+
+-- 插入示例数据 
+INSERT INTO articles (title) VALUES ('MySQL 8.0 中文分词搜索'), ('使用 FULLTEXT 索引进行全文搜索'), ('如何使用分词器优化搜索效果'), ('通过 MySQL 实现高效的文本搜索'); 
+-- 执行针对 title 字段的全文搜索并分页 
+
+
+SELECT * FROM articles WHERE MATCH(title) AGAINST('中文分词' IN NATURAL LANGUAGE MODE)
+```
+
+
+
+
+
+## 41分词的搜索模式
+
+在 MySQL 中，全文搜索可以使用两种模式：**自然语言模式（Natural Language Mode）** 和 **布尔模式（Boolean Mode）**。这两种模式在搜索行为和结果的计算方式上有较大的区别。下面是对两者的详细介绍和使用场景的比较。
+
+#### 1. **自然语言模式（Natural Language Mode）**
+
+#### 工作原理：
+
+- **自动计算相关性**：自然语言模式基于 MySQL 的内置算法，自动计算文本中每个词语的相关性，然后返回相关性最高的结果。它会考虑词频、词在文档中的分布等因素，类似于传统的搜索引擎行为。
+- **无需显式操作符**：你只需要输入搜索词，MySQL 会根据这些词的出现频率和相关性返回匹配结果。
+
+#### 关键特性：
+
+- **自动忽略无意义词**：自然语言模式中，某些常见词（例如 "the" 或 "is" 等）可能会被 MySQL 认为是无关紧要的词，这些词在相关性计算中会被忽略。
+- **词语相关性排名**：MySQL 会根据词在表中出现的频率对搜索结果排序。出现频率越低的词语被认为越重要，排名越靠前。
+- **自动分词**：自然语言模式下会自动对输入的文本进行分词，这对中英文的处理尤其重要。
+
+#### 示例：
+
+假设你有以下文章表：
+
+```
+sql
+
+
+复制代码
+CREATE TABLE articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255),
+  content TEXT,
+  FULLTEXT (title, content)
+) ENGINE=InnoDB;
+```
+
+你想在 `title` 和 `content` 字段中搜索与 "MySQL 中文搜索" 相关的内容，可以使用自然语言模式：
+
+```
+sql
+
+
+复制代码
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('MySQL 中文搜索' IN NATURAL LANGUAGE MODE);
+```
+
+- **结果排序**：MySQL 会根据文章中 "MySQL"、"中文"、"搜索" 这些词的相关性自动返回最相关的记录。
+
+#### 自然语言模式的优点：
+
+- 简单易用，不需要复杂的语法。
+- 自动排序，适合快速获取相关性较高的结果。
+- 适合一般用户的搜索场景。
+
+#### 局限：
+
+- 不支持精确的逻辑控制，例如排除某些词或强制包含某些词。
+- 对于自定义的高级搜索需求可能力不从心。
+
+#### 2. **布尔模式（Boolean Mode）**
+
+#### 工作原理：
+
+- **精确控制查询**：布尔模式允许使用逻辑操作符（如 `+`、`-`、`*` 等）来精确控制查询。例如，你可以指定必须包含某些词、排除某些词，或者调整词的优先级。
+- **不自动计算相关性**：布尔模式不会根据词频或其他因素自动计算相关性，而是直接执行用户指定的逻辑。
+
+#### 关键特性：
+
+- 支持逻辑操作符
+
+  ：布尔模式允许使用操作符来精确控制查询逻辑，常见操作符如下：
+
+  - **`+`**：强制包含。必须包含该词语的记录才会返回。
+  - **`-`**：排除。该词语不能出现在结果中。
+  - **`\*`**：通配符，表示词的部分匹配。
+  - **`>` 和 `<`**：用于提高或降低词语的权重。
+  - **`~`**：减少词语的权重。
+  - **`()`**：用于分组子表达式，类似于数学中的括号操作。
+  - **`""`**：精确短语匹配。
+
+#### 示例：
+
+假设你要在 `title` 和 `content` 中搜索所有包含 "MySQL" 但不包含 "搜索" 的文章，可以使用布尔模式：
+
+```
+sql
+
+
+复制代码
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('+MySQL -搜索' IN BOOLEAN MODE);
+```
+
+- **解释**：`+MySQL` 表示查询结果必须包含 "MySQL"，而 `-搜索` 表示查询结果中不能包含 "搜索"。
+
+进一步的例子是使用通配符搜索带有 "优化" 前缀的词语：
+
+```
+sql
+
+
+复制代码
+SELECT * FROM articles
+WHERE MATCH(title, content) AGAINST('优化*' IN BOOLEAN MODE);
+```
+
+- **解释**：`优化*` 表示匹配所有以 "优化" 开头的词语，比如 "优化"、"优化器"。
+
+#### 布尔模式的优点：
+
+- **精确控制**：允许你精确控制搜索逻辑，适合需要复杂查询的场景。
+- **灵活性高**：支持逻辑操作符、权重控制、精确短语匹配等高级功能。
+- **适合过滤结果**：可以排除不相关的内容或强制包含重要的关键词。
+
+#### 局限：
+
+- **需要掌握布尔逻辑**：用户需要熟悉操作符和布尔逻辑的用法，语法较为复杂。
+- **相关性不自动计算**：搜索结果不会自动按照相关性排序，用户需要手动定义查询逻辑。
+
+#### 3. **自然语言模式与布尔模式的对比**
+
+| 特性           | 自然语言模式                 | 布尔模式                         |
+| -------------- | ---------------------------- | -------------------------------- |
+| **相关性计算** | 自动计算相关性并按相关性排序 | 不自动计算，需要用户控制查询逻辑 |
+| **语法复杂度** | 简单易用，只需输入关键词     | 复杂，需要使用逻辑操作符         |
+| **逻辑控制**   | 不支持精确控制               | 支持逻辑操作符精确控制查询       |
+| **搜索行为**   | 基于文本的相关性             | 完全基于用户定义的逻辑           |
+| **适合场景**   | 快速获取与关键词相关的内容   | 需要精确过滤和控制的搜索场景     |
+
+#### 总结：
+
+- **自然语言模式** 适合一般用户或不需要太复杂逻辑的查询。你只需要输入关键词，MySQL 会自动返回最相关的结果。
+- **布尔模式** 适合高级用户或开发者，他们需要对搜索逻辑进行精确控制，过滤掉不相关的结果或强制包含重要的关键词。
+
+选择哪种模式取决于你具体的需求。如果需要简单快速的搜索，使用自然语言模式；如果需要精确控制搜索行为，可以选择布尔模式。

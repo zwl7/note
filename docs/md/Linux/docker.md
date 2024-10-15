@@ -1093,6 +1093,8 @@ docker build -f Dockerfile -t ginskeleton:v20240105-1540 .
 
 docker build -f dockerfile-centos -t wenlin-vim-net-centos .
 
+docker build -f Dockerfile -t ginskeleton:v20240913-1011 .
+
 ```
 
 ![image-20210905152521183](../img/image-20210905152521183.png)
@@ -1627,6 +1629,132 @@ docker-compose up -d go-gin-skeleton
 --scale php-cluster=2
 
 docker-compose up -d go-gin-skeleton
+
+
+
+### 
+
+如果我只改了其中某个端口号，如何重启这个服务呢？
+
+```yml
+php-task-manage:
+    image: registry.cn-hangzhou.aliyuncs.com/test_wenlin/papa-php7-3:v1.3.3
+    #设置了，就不能动态扩展scale --scale php-cluster=2
+    #container_name: php-social-sports
+    ports:
+     - "8170:8164"
+    tty: true
+    volumes:
+      - ${SOURCE_DIR}/papa/yunnanPhp/php-task-manage:/app/:rw
+      - ${PHP_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      - ${PHP_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
+      - ${PHP_LOG_DIR}:/var/log/php
+      - ${DATA_DIR}/composer:/tmp/composer
+    restart: always
+    command: "/app/start-local.sh"
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - default
+```
+
+
+
+#### 1. **重启单个服务**
+
+你可以使用 `docker-compose restart` 命令来重启特定的服务，而不影响其他服务。
+
+例如，如果你只想重启 `php-task-manage` 服务：
+
+```
+bash
+
+
+复制代码
+docker-compose restart php-task-manage
+```
+
+这只会重启 `php-task-manage` 服务，而其他服务保持不变。
+
+
+
+这种只会重启容器，但是端口号映射不会改变。
+
+
+
+#### 2. **停止和启动单个服务**
+
+你可以使用 `docker-compose stop` 和 `docker-compose up` 仅对某个服务进行操作，而不会停止或重启所有服务。
+
+- **停止特定服务**：
+
+  ```
+  bash
+  
+  
+  复制代码
+  docker-compose stop php-task-manage
+  ```
+
+- **启动特定服务**：
+
+  ```
+  bash
+  
+  
+  复制代码
+  docker-compose up -d php-task-manage
+  ```
+
+- 这样可以确保只有 `php-task-manage` 服务被停止并启动，不会影响其他运行中的服务， 这种会重新加载service的配置去重启容器，端口号映射会改变。
+
+
+
+
+
+#### 3. **替代 `down` 的方法：`rm` 和 `up`**
+
+`docker-compose down` 会移除所有服务的容器、网络等。你可以避免使用 `down`，转而使用 `rm` 来单独移除停止的容器，或者仅对某个服务进行操作。
+
+- 停止某个服务后移除该服务的容器：
+
+  ```
+  bash
+  
+  
+  复制代码
+  docker-compose stop php-task-manage
+  docker-compose rm php-task-manage
+  ```
+
+- 然后重启该服务：
+
+  ```
+  bash
+  
+  
+  复制代码
+  docker-compose up -d php-task-manage
+  ```
+
+#### 4. **`docker-compose up --no-deps`**（不重启依赖服务）
+
+如果你希望只重启某个服务，并且不想影响其依赖的服务，可以使用 `--no-deps` 参数。这个选项会只启动或重启指定的服务，而不会重启它的依赖服务。
+
+```
+bash
+
+
+复制代码
+docker-compose up -d --no-deps php-task-manage
+```
+
+这样即使 `php-task-manage` 依赖于 `mysql` 和 `redis`，这些服务也不会被重启。
+
+
 
 ### yaml规则
 
