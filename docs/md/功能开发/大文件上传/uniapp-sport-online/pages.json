@@ -1,0 +1,270 @@
+{
+	"pages": [{
+			"path": "pages/tabbar/home/index",
+			"style": {
+				"navigationBarTitleText": "首页",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/tabbar/mine/index",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/uploadDemo/uploadDemo",
+			"style": {
+				"navigationBarTitleText": "文件上传测试",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/tabbar/about/index",
+			"style": {
+				"navigationBarTitleText": "章程",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/setting/index",
+			"style": {
+				"navigationBarTitleText": "设置",
+				"enablePullDownRefresh": false,
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
+			"path": "pages/eventsDetail/index",
+			"style": {
+				"navigationBarTitleText": "网络对弈",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/apply/index",
+			"style": {
+				"navigationBarTitleText": "报名",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/applyResult/index",
+			"style": {
+				"navigationBarTitleText": "报名结果",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/videoDetail/index",
+			"style": {
+				"navigationBarTitleText": "视频详情",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/uploadWorks/index",
+			"style": {
+				"navigationBarTitleText": "上传作品",
+				"enablePullDownRefresh": false,
+				"navigationBarBackgroundColor": "#fff"
+			}
+
+		},
+		{
+			"path": "pages/noticeInformation/index",
+			"style": {
+				"navigationBarTitleText": "公告资讯",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/fitnessGuide/index",
+			"style": {
+				"navigationBarTitleText": "健身指导",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
+			"path": "pages/certificate/index",
+			"style": {
+				"navigationBarTitleText": "领取证书",
+				"enablePullDownRefresh": false,
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
+			"path": "pages/serviceAgreement/index",
+			"style": {
+				"navigationBarTitleText": "服务协议",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/privacyAgreement/index",
+			"style": {
+				"navigationBarTitleText": "隐私协议",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登陆",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/register/index",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/joinEventsDetail/index",
+			"style": {
+				"navigationBarTitleText": "赛事详情",
+				"enablePullDownRefresh": true,
+				"navigationStyle": "custom"
+			}
+
+		},
+		{
+			"path": "pages/feedback/index",
+			"style": {
+				"navigationBarTitleText": "意见反馈",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
+			"path": "pages/authentication/index",
+			"style": {
+				"navigationBarTitleText": "实名认证",
+				"enablePullDownRefresh": false,
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
+			"path": "pages/productionList/index",
+			"style": {
+				"navigationBarTitleText": "参赛作品",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/certificateShare/index",
+			"style": {
+				"navigationBarTitleText": "证书",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/demo/demo",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/notice/notice",
+			"style": {
+				"navigationBarTitleText": "公告详情",
+				"enablePullDownRefresh": false
+			}
+		}, {
+			"path": "pages/webView/webView",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/reportVideo/index",
+			"style": {
+				"navigationBarTitleText": "视频举报",
+				"enablePullDownRefresh": false,
+				"navigationBarBackgroundColor": "#fff"
+			}
+
+		}, {
+			"path": "pages/videoDetailPainter/index",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom",
+				"usingComponents": {
+					"painter": "/wxcomponents/painter/index"
+				}
+			}
+
+		}, {
+			"path": "pages/userInfo/index",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"enablePullDownRefresh": false
+			}
+
+		},
+		{
+			"path": "pages/aboutUs/aboutUs",
+			"style": {
+				"navigationBarTitleText": "关于我们",
+				"enablePullDownRefresh": false
+			}
+
+		}
+	    ,{
+            "path" : "pages/upload2/upload2",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "上传华为云切片2",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+    ],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {},
+	"tabBar": {
+		"borderStyle": "white",
+		"color": "#999999",
+		"selectedColor": "#333333",
+		"list": [{
+				"pagePath": "pages/tabbar/home/index",
+				"iconPath": "static/tabbar/index.png",
+				"selectedIconPath": "static/tabbar/index-active.png",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/tabbar/about/index",
+				"iconPath": "static/tabbar/about.png",
+				"selectedIconPath": "static/tabbar/about-active.png",
+				"text": "赛会章程"
+			},
+			{
+				"pagePath": "pages/tabbar/mine/index",
+				"iconPath": "static/tabbar/user.png",
+				"selectedIconPath": "static/tabbar/user-active.png",
+				"text": "我的"
+			}
+		]
+	}
+}

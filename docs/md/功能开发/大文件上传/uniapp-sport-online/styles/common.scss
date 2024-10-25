@@ -1,0 +1,86 @@
+view,
+scroll-view,
+swiper,
+swiper-item,
+cover-view,
+cover-image,
+icon,
+text,
+rich-text,
+progress,
+button,
+checkbox,
+form,
+input,
+label,
+radio,
+slider,
+switch,
+textarea,
+navigator,
+audio,
+camera,
+image,
+video,
+page {
+	box-sizing: border-box;
+}
+
+button {
+	padding: 0;
+	margin: 0;
+}
+
+button:after {
+	border: 0;
+}
+
+page {
+	background-color: #f7f8fa;
+}
+
+.isIos {
+	padding-bottom: 60rpx !important;
+}
+
+.ellipsis-2 {
+	display: -webkit-box;
+	word-break: break-all;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ellipsis {
+	width: 500px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+checkbox.round .wx-checkbox-input,
+checkbox.round .uni-checkbox-input {
+	border-radius: 100px;
+}
+
+checkbox.red[checked] .wx-checkbox-input,
+checkbox.red.checked .uni-checkbox-input {
+	background-color: #e54d42 !important;
+	border-color: #e54d42 !important;
+	color: #ffffff !important;
+}
+
+checkbox.orange[checked] .wx-checkbox-input,
+checkbox.orange.checked .uni-checkbox-input {
+	background-color: #ff7200 !important;
+	border-color: #ff7200 !important;
+	color: #ffffff !important;
+}
+
+::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+	color: transparent;
+}
