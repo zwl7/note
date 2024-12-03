@@ -1,4 +1,159 @@
-在 Go http包的Server中，每一个请求在都有一个对应的 goroutine 去处理。请求处理函数通常会启动额外的 goroutine 用来访问后端服务，比如数据库和RPC服务。用来处理一个请求的 goroutine 通常需要访问一些与请求特定的数据，比如终端用户的身份认证信息、验证相关的token、请求的截止时间。 当一个请求被取消或超时时，所有用来处理该请求的 goroutine 都应该迅速退出，然后系统才能释放这些 goroutine 占用的资源。
+## 1.context的本质
+
+
+
+其实context就是一个接口
+
+
+
+![image-20241114100738758](/Users/zwl/Documents/github/note/docs/md/img/image-20241114100738758.png)
+
+
+
+有4个函数 
+
+
+
+```
+第一个 
+Deadline() (deadline time.Time, ok bool)   返回终止时间 和 ok的值
+
+// Deadline returns the time when work done on behalf of this context
+// should be canceled. Deadline returns ok==false when no deadline is
+// set. Successive calls to Deadline return the same results.
+
+
+Deadline返回代表此上下文完成工作的时间
+context应该要被取消的。当没有截止日期时，截止日期返回ok==false
+连续调用Deadline返回相同的结果。
+```
+
+
+
+
+
+```
+	第二个
+	// See https://blog.golang.org/pipelines for more examples of how to use
+	// a Done channel for cancellation.
+	Done() <-chan struct{}  //Done返回一个只读通道，当代表此完成工作时，该通道将关闭
+
+// Done returns a channel that's closed when work done on behalf of this
+	// context should be canceled. Done may return nil if this context can
+	// never be canceled. Successive calls to Done return the same value.
+	// The close of the Done channel may happen asynchronously,
+	// after the cancel function returns.
+	//
+	// WithCancel arranges for Done to be closed when cancel is called;
+	// WithDeadline arranges for Done to be closed when the deadline
+	// expires; WithTimeout arranges for Done to be closed when the timeout
+	// elapses.
+	//
+	// Done is provided for use in select statements:
+	//
+	//  // Stream generates values with DoSomething and sends them to out
+	//  // until DoSomething returns an error or ctx.Done is closed.
+	//  func Stream(ctx context.Context, out chan<- Value) error {
+	//  	for {
+	//  		v, err := DoSomething(ctx)
+	//  		if err != nil {
+	//  			return err
+	//  		}
+	//  		select {
+	//  		case <-ctx.Done():
+	//  			return ctx.Err()
+	//  		case out <- v:
+	//  		}
+	//  	}
+	//  }
+	//
+
+
+	
+```
+
+
+
+```
+第三个
+Err()    函数会返回context遇到的错误
+
+//如果Done尚未关闭，Err将返回nil。
+//如果Done关闭，Err返回一个非nil错误，解释原因：
+//如果上下文被取消，则取消
+//或超过上下文的截止日期。
+//在Err返回非nil错误后，对Err的连续调用将返回相同的错误。
+
+
+```
+
+
+
+```
+第四个  往ctx里面设置一个值
+
+Value(key any) any  在context里面 去设置值，可以设置任何值
+```
+
+
+
+
+
+
+
+可以通过context.Background（）和 context.TODO（）这两个函数去创建一个空context，其实这两个都是emptyCtx
+
+
+
+![image-20241114105105209](/Users/zwl/Documents/github/note/docs/md/img/image-20241114105105209.png)
+
+
+
+## Context初识
+
+Go1.7加入了一个新的标准库`context`，它定义了`Context`类型，专门用来简化 对于处理单个请求的多个 goroutine 之间与请求域的数据、取消信号、截止时间等相关操作，这些操作可能涉及多个 API 调用。
+
+对服务器传入的请求应该创建上下文，而对服务器的传出调用应该接受上下文。它们之间的函数调用链必须传递上下文，或者可以使用`WithCancel`、`WithDeadline`、`WithTimeout`或`WithValue`创建的派生上下文。当一个上下文被取消时，它派生的所有上下文也被取消。
+
+## Context接口
+
+`context.Context`是一个接口，该接口定义了四个需要实现的方法。具体签名如下：
+
+```text
+type Context interface {
+    Deadline() (deadline time.Time, ok bool)
+    Done() <-chan struct{}
+    Err() error
+    Value(key interface{}) interface{}
+}
+```
+
+其中：
+
+- `Deadline`方法需要返回当前`Context`被取消的时间，也就是完成工作的截止时间（deadline）；
+
+- `Done`方法需要返回一个`Channel`，这个Channel会在当前工作完成或者上下文被取消之后关闭，多次调用`Done`方法会返回同一个Channel；
+
+- `Err`方法会返回当前`Context`结束的原因，它只会在`Done`返回的Channel被关闭时才会返回非空的值；
+
+- - 如果当前`Context`被取消就会返回`Canceled`错误；
+  - 如果当前`Context`超时就会返回`DeadlineExceeded`错误；
+
+
+
+- `Value`方法会从`Context`中返回键对应的值，对于同一个上下文来说，多次调用`Value` 并传入相同的`Key`会返回相同的结果，该方法仅用于传递跨API和进程间跟请求域的数据；
+
+### Background()和TODO()
+
+Go内置两个函数：`Background()`和`TODO()`，这两个函数分别返回一个实现了`Context`接口的`background`和`todo`。我们代码中最开始都是以这两个内置的上下文对象作为最顶层的`partent context`，衍生出更多的子上下文对象。
+
+`Background()`主要用于main函数、初始化以及测试代码中，作为Context这个树结构的最顶层的Context，也就是根Context。
+
+`background`和`todo`本质上都是`emptyCtx`结构体类型，是一个不可取消，没有设置截止时间，没有携带任何值的Context。
+
+
+
+
 
 ## 为什么需要Context
 
@@ -6,7 +161,7 @@
 
 ### 基本示例
 
-```text
+```go
 package main
 
 import (
@@ -40,7 +195,7 @@ func main() {
 
 ### 全局变量方式
 
-```text
+```go
 package main
 
 import (
@@ -80,7 +235,7 @@ func main() {
 
 ### 通道方式
 
-```text
+```go
 package main
 
 import (
@@ -123,7 +278,7 @@ func main() {
 
 ### 官方版的方案
 
-```text
+```go
 package main
 
 import (
@@ -163,7 +318,7 @@ func main() {
 
 当子goroutine又开启另外一个goroutine时，只需要将ctx传入即可：
 
-```text
+```go
 package main
 
 import (
@@ -214,49 +369,167 @@ func main() {
 }
 ```
 
-## Context初识
 
-Go1.7加入了一个新的标准库`context`，它定义了`Context`类型，专门用来简化 对于处理单个请求的多个 goroutine 之间与请求域的数据、取消信号、截止时间等相关操作，这些操作可能涉及多个 API 调用。
 
-对服务器传入的请求应该创建上下文，而对服务器的传出调用应该接受上下文。它们之间的函数调用链必须传递上下文，或者可以使用`WithCancel`、`WithDeadline`、`WithTimeout`或`WithValue`创建的派生上下文。当一个上下文被取消时，它派生的所有上下文也被取消。
+### 实战
 
-## Context接口
+```go
+package main
 
-`context.Context`是一个接口，该接口定义了四个需要实现的方法。具体签名如下：
+import (
+	"context"
+	"fmt"
+	"time"
+)
 
-```text
-type Context interface {
-    Deadline() (deadline time.Time, ok bool)
-    Done() <-chan struct{}
-    Err() error
-    Value(key interface{}) interface{}
+func main() {
+
+	// 体验 使用context的 Value方法，在多个context里面传递
+
+	//ctx := context.Background()
+	//fmt.Printf("ctx is %p \n", &ctx)
+	//
+	//// 使用超时方法，控制
+	//step3(step2(step1(ctx))) //context的传递
+
+	//超时时间控制
+	//f1()
+	//f2()
+	//f3()
+	f4()
+
 }
+
+func step1(ctx context.Context) context.Context {
+	fmt.Printf("ctx step1 is %p \n", &ctx)
+	return context.WithValue(ctx, "name", "zwl")
+}
+func step2(ctx context.Context) context.Context {
+	fmt.Printf("ctx step2 is %p \n", &ctx)
+	return context.WithValue(ctx, "age", 10)
+}
+
+func step3(ctx context.Context) {
+	fmt.Printf("ctx is step3  %p \n ", &ctx)
+	fmt.Printf("ctx data name is %s ,age is %d", ctx.Value("name"), ctx.Value("age"))
+}
+
+func f1() {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+LOOP:
+	for {
+		select {
+		case v := <-ctx.Done(): //3s后done 对应道通过那个道被关闭，返回的v是空结构体
+			fmt.Printf("1 s后 超时了， done通道被关闭，读取时，读取道空结构体 %v \n", v)
+			break LOOP //不能退出循环 所以该用return
+		default:
+			fmt.Printf("执行默认 %d \n", time.Now().Unix())
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	fmt.Println("over...")
+
+}
+
+func f2() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3) //设置了3s超时
+	defer cancel()
+	t1 := time.Now().Unix()
+
+	time.Sleep(1 * time.Second) //sleep了1s 3-1 还剩2s超时
+
+	ctx1, cancel1 := context.WithTimeout(ctx, time.Second*4) //设置了4s超时 4 大于 2  ，所以还剩以最低的超时时间 为准 超时时间还有2s
+	defer cancel1()
+	t2 := time.Now().Unix()
+
+	select {
+	case <-ctx1.Done(): // 2s后超时时间到，done返回的通道自动被关闭 解除阻塞 进入case
+
+		fmt.Printf("超时 时间到了") //
+		fmt.Println(ctx1.Err())     //打印ctx1 的错误  context deadline exceeded
+
+		t3 := time.Now().Unix()
+		fmt.Println(t2 - t1) //1
+		fmt.Println(t3 - t2) //2
+		fmt.Println(t3 - t1) //3
+	}
+}
+
+//子携程通知函数
+func f3() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	t1 := time.Now().Unix()
+	go func() {
+		//业务处理 如果3s没有处理完，则结束goroutine
+		time.Sleep(3 * time.Second)
+
+		//3s后执行cancel
+		cancel() //ctx的done对应的通道被关闭
+	}()
+
+	select {
+	case <-ctx.Done(): //3s后执行
+		t2 := time.Now().Unix()
+		fmt.Println(ctx.Err())
+		fmt.Println(t2 - t1)
+		return
+	}
+
+}
+
+//主函数通知子携程
+func f4() {
+
+	//开启2个携程，如果过了5s后，两个协程还是没有执行完 ，则关闭所有的协程
+
+	//比如
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		i := 0
+	LOOP:
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("done")
+				fmt.Println(ctx.Err()) //通知到子携程结束了
+				break LOOP
+			default:
+				//否则间隔1s打印一次
+				fmt.Println(123)
+				i++
+				time.Sleep(1 * time.Second)
+
+				if i > 5 {
+					//跳出循环
+					break LOOP
+				}
+			}
+		}
+	}()
+
+	//超过3s后执行cancel
+	time.Sleep(3 * time.Second)
+	cancel()
+
+	time.Sleep(1 * time.Second)
+	fmt.Println("over")
+
+}
+
+
 ```
 
-其中：
-
-- `Deadline`方法需要返回当前`Context`被取消的时间，也就是完成工作的截止时间（deadline）；
-
-- `Done`方法需要返回一个`Channel`，这个Channel会在当前工作完成或者上下文被取消之后关闭，多次调用`Done`方法会返回同一个Channel；
-
-- `Err`方法会返回当前`Context`结束的原因，它只会在`Done`返回的Channel被关闭时才会返回非空的值；
-
-- - 如果当前`Context`被取消就会返回`Canceled`错误；
-  - 如果当前`Context`超时就会返回`DeadlineExceeded`错误；
 
 
 
-- `Value`方法会从`Context`中返回键对应的值，对于同一个上下文来说，多次调用`Value` 并传入相同的`Key`会返回相同的结果，该方法仅用于传递跨API和进程间跟请求域的数据；
-
-### Background()和TODO()
-
-Go内置两个函数：`Background()`和`TODO()`，这两个函数分别返回一个实现了`Context`接口的`background`和`todo`。我们代码中最开始都是以这两个内置的上下文对象作为最顶层的`partent context`，衍生出更多的子上下文对象。
-
-`Background()`主要用于main函数、初始化以及测试代码中，作为Context这个树结构的最顶层的Context，也就是根Context。
-
-`TODO()`，它目前还不知道具体的使用场景，如果我们不知道该使用什么Context的时候，可以使用这个。
-
-`background`和`todo`本质上都是`emptyCtx`结构体类型，是一个不可取消，没有设置截止时间，没有携带任何值的Context。
 
 ## With系列函数
 

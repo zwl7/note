@@ -37,6 +37,143 @@ body, err := ioutil.ReadAll(resp.Body)
 // ...
 ```
 
+
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "net/url"
+)
+
+// SendGET sends an HTTP GET request
+func SendGET(url string, headers map[string]string) (string, error) {
+    client := &http.Client{}
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return "", err
+    }
+    
+    // Set headers
+    for k, v := range headers {
+        req.Header.Set(k, v)
+    }
+
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+    
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+
+    return string(body), nil
+}
+
+// SendPOSTJSON sends an HTTP POST request with JSON payload
+func SendPOSTJSON(url string, data interface{}, headers map[string]string) (string, error) {
+    jsonData, err := json.Marshal(data)
+    if err != nil {
+        return "", err
+    }
+
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+    if err != nil {
+        return "", err
+    }
+    req.Header.Set("Content-Type", "application/json")
+    for k, v := range headers {
+        req.Header.Set(k, v)
+    }
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+
+    return string(body), nil
+}
+
+// SendPOSTForm sends an HTTP POST request with x-www-form-urlencoded payload
+func SendPOSTForm(url string, formData map[string]string, headers map[string]string) (string, error) {
+    form := url.Values{}
+    for k, v := range formData {
+        form.Add(k, v)
+    }
+
+    req, err := http.NewRequest("POST", url, bytes.NewBufferString(form.Encode()))
+    if err != nil {
+        return "", err
+    }
+    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    for k, v := range headers {
+        req.Header.Set(k, v)
+    }
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+
+    return string(body), nil
+}
+
+func main() {
+    // Example usage:
+    getURL := "https://api.example.com/get"
+    postURL := "https://api.example.com/post"
+
+    // Send GET request
+    getResponse, err := SendGET(getURL, map[string]string{"Authorization": "Bearer token"})
+    if err != nil {
+        fmt.Println("GET error:", err)
+    } else {
+        fmt.Println("GET response:", getResponse)
+    }
+
+    // Send POST request with JSON
+    jsonResponse, err := SendPOSTJSON(postURL, map[string]string{"key": "value"}, map[string]string{"Authorization": "Bearer token"})
+    if err != nil {
+        fmt.Println("POST JSON error:", err)
+    } else {
+        fmt.Println("POST JSON response:", jsonResponse)
+    }
+
+    // Send POST request with form data
+    formResponse, err := SendPOSTForm(postURL, map[string]string{"key": "value"}, map[string]string{"Authorization": "Bearer token"})
+    if err != nil {
+        fmt.Println("POST Form error:", err)
+    } else {
+        fmt.Println("POST Form response:", formResponse)
+    }
+}
+
+```
+
+
+
 ### GET请求示例
 
 使用`net/http`包编写一个简单的发送HTTP请求的Client端，代码如下：

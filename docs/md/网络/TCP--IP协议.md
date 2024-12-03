@@ -128,6 +128,33 @@ RST表示连接重置。
 
 ### SYN FLOOD
 
+
+
+### **3. 如何从 `netstat` 输出中结合 TCP 协议排查问题**
+
+假设以下是 `netstat` 的部分输出：
+
+```
+plaintext
+
+
+复制代码
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 192.168.0.1:80         192.168.0.2:34567       ESTABLISHED 1234/nginx
+tcp        0      0 192.168.0.1:80         192.168.0.3:34568       TIME_WAIT   -
+tcp        0      0 192.168.0.1:80         192.168.0.4:34569       SYN_RECV    -
+```
+
+- 分析
+
+  ：
+
+  - 第一行：客户端 `192.168.0.2` 和服务器正常通信。
+  - 第二行：`192.168.0.3` 已关闭连接，但处于 `TIME_WAIT`，可能是短连接导致的。
+  - 第三行：`192.168.0.4` 处于 `SYN_RECV`，说明客户端发起了大量连接但未完成握手（可能是 SYN Flood 攻击）。
+
+
+
 　　SYN Flood是指利用TCP协议缺陷，发送大量伪造的TCP连接请求（SYN包），从而使得被攻击方资源耗尽（CPU满负荷或内存不足）的攻击方式。
 
 　　**缓解方法：调整3个内核参数：tcp_max_syn_backlog，tcp_synack_retries，tcp_syncookies**

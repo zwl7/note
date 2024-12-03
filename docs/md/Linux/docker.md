@@ -1558,17 +1558,27 @@ docker-compose scale provider=3 gateway=2
 
 
 
+生产环境必须要改成 docker compose up -d --no-deps --scale php-organ-unit=3 才能在生产环境执行。加了--no-deps 只会扩展php-organ-unit
+
+
+
 #### 动态扩容
 
-启动时，指定php-cluster扩容成两个服务 ：docker-compose up --scale php-cluster=2 -d 
-
-启动后，需要增加扩容一个则直接：docker-compose scale provider=3 gateway=2
-
-docker-compose scale go-gin-skeleton=3
+启动时，指定php-cluster扩容成两个服务 ：docker-compose up -d --scale php-task-manage=2 -scale php-InfoPlatform=3这个命令会重启全部服务。只能在第一次初始化时使用
 
 
 
+docker compose up -d php-organ-unit-two
 
+
+
+扩缩容
+
+1变成3 docker compose up  -d --scale php-event-activity=3
+
+3变成1 docker compose up -d --scale php-event-activity=1
+
+docker compose up -d --scale php-area-submit=1
 
 docker-compose up go-gin-skeleton   会使用docker-compose.yml中的 go-gin-skeleton 最新的镜像进行run服务
 
@@ -1613,8 +1623,19 @@ $ docker-compose rm php                     # 删除并且停止php容器
 $ docker-compose down                       # 停止并删除容器，网络，图像和挂载卷
 ```
 
-docker-compose up php-activity-platform
-docker-compose up -d go-gin-skeleton
+
+
+
+
+执行docker compose up -d --scale php-social-sports=3 后 
+
+//需要重新加载nginx服务的配置 nginx -s reload
+
+负载均衡才能生效(全部请求会轮训的方式分别打到3个容器中去)，不然全部请求，还是打到一个容器中。
+
+
+
+docker compose up -d --scale php-organ-unit=3
 
 新增一个容器,直接 docker-compose up -d php-test即可
 
@@ -1625,10 +1646,6 @@ docker-compose up -d go-gin-skeleton
 ![image-20231229150108159](../img/image-20231229150108159.png)
 
 
-
---scale php-cluster=2
-
-docker-compose up -d go-gin-skeleton
 
 
 
@@ -1674,7 +1691,7 @@ bash
 
 
 复制代码
-docker-compose restart php-task-manage
+docker compose restart php-task-manage
 ```
 
 这只会重启 `php-task-manage` 服务，而其他服务保持不变。
@@ -1740,7 +1757,9 @@ docker-compose restart php-task-manage
   docker-compose up -d php-task-manage
   ```
 
-#### 4. **`docker-compose up --no-deps`**（不重启依赖服务）
+#### 4. **`docker-compose up --no-deps`**（不重启依赖服务） 
+
+docker compose up --no-deps --scale php-organ-unit=2
 
 如果你希望只重启某个服务，并且不想影响其依赖的服务，可以使用 `--no-deps` 参数。这个选项会只启动或重启指定的服务，而不会重启它的依赖服务。
 
@@ -1753,6 +1772,8 @@ docker-compose up -d --no-deps php-task-manage
 ```
 
 这样即使 `php-task-manage` 依赖于 `mysql` 和 `redis`，这些服务也不会被重启。
+
+docker-compose up --scale php-organ-unit=1
 
 
 

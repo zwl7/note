@@ -957,3 +957,81 @@ fclose($lockFile);
 redis的setnx操作。
 
 借助mysql的事务和锁的机制。也可以。
+
+
+
+
+
+### 44  empty可以直接判断 数组不存在的变量
+
+![image-20241126094036526](/Users/zwl/Documents/github/note/docs/md/img/image-20241126094036526.png)
+
+
+
+```php
+if (isset($search["status"]) && !empty($search["status"])){
+            $query->setAnd("status",$search["status"]);
+}
+
+
+可以优化成
+  
+if (!empty($search["status"])){
+            $query->setAnd("status",$search["status"]);
+}
+
+因为empty里面已经调用了isset函数了
+  
+  
+PHP 中的 empty 是一个 语言构造器（language construct），而不是一个普通的函数。这导致了以下一些特性和限制，其中包括不能用 可变函数（variable functions） 或 命名参数（named arguments） 来调用它。
+
+1. 什么是语言构造器？
+语言构造器是 PHP 的内置语法结构，用来完成某些特定的任务，例如 echo、isset、unset、include、require 和 empty 等。它们和普通函数有一些重要的区别：
+
+无需括号： 在很多情况下，语言构造器的使用可以省略括号，例如 echo "Hello, World!";。
+不能作为可变函数： 由于它们不是函数，不能通过变量动态调用。
+没有返回值类型限制： 某些构造器，比如 echo，实际上不返回任何值。
+empty 的作用是检查一个变量是否为空，因此它被设计为语言构造器，而不是一个普通函数。
+
+2. 可变函数调用的限制
+什么是可变函数？
+在 PHP 中，函数名可以存储在变量中，通过变量动态调用函数。例如：
+
+php
+复制代码
+$functionName = "strlen";
+echo $functionName("Hello"); // 输出 5
+为什么 empty 不能作为可变函数调用？
+因为 empty 不是一个普通函数，它是语言构造器。在可变函数的上下文中，PHP 只支持调用函数，而不支持调用语言构造器。例如：
+
+php
+复制代码
+$functionName = "empty";
+$functionName($var); // 报错：Uncaught Error: Call to undefined function empty()
+在这段代码中，PHP 试图寻找一个名为 empty 的函数，而不是调用语言构造器 empty，所以会报错。
+
+3. 命名参数调用的限制
+什么是命名参数？
+从 PHP 8.0 开始，可以使用 命名参数（named arguments），允许按参数名称而非顺序传递值。例如：
+
+php
+复制代码
+function greet($name, $message) {
+    echo "$name, $message";
+}
+
+greet(message: "Hello!", name: "John"); // 输出：John, Hello!
+为什么 empty 不能使用命名参数？
+因为 empty 不是函数，没有参数的名称绑定机制，而是直接基于语言规则操作变量。因此，以下代码是不允许的：
+
+php
+复制代码
+empty(var: $myVar); // 报错：syntax error
+这种调用方式只适用于普通函数，而不适用于语言构造器。
+
+4. 总结
+可变函数限制： empty 是语言构造器，不能通过变量动态调用。
+命名参数限制： empty 不能使用 PHP 8.0 引入的命名参数功能，因为它不是普通函数。
+正确使用方式： 始终直接调用 empty($var) 或 empty($array['key'])，而不要尝试用变量或命名参数的方式调用。
+```
+

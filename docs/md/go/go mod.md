@@ -165,7 +165,7 @@ go mod tidy
 
 
 
-```
+### 3.在goland里面要打勾这个
 
-```
+![image-20241112183144038](/Users/zwl/Documents/github/note/docs/md/img/image-20241112183144038.png)
 
