@@ -1780,15 +1780,26 @@ bash
 
 
 复制代码
-iostat -x 1
+iostat -x -m 5
 ```
 
 输出内容解释：
 
-- **r/s 和 w/s**: 每秒读取和写入的次数。
-- **rkB/s 和 wkB/s**: 每秒读取和写入的数据量（以 KB 为单位）。
-- **await**: 平均每次 I/O 操作的等待时间，时间越长表示磁盘压力越大。
-- **%util**: 磁盘的使用率，接近 100% 表示磁盘非常繁忙。
+- `rrqm/s`（Read requests merged per second）：每秒合并的读请求数。
+- `wrqm/s`（Write requests merged per second）：每秒合并的写请求数。
+- `r/s`（Reads per second）：每秒完成的读操作次数。
+- `w/s`（Writes per second）：每秒完成的写操作次数。
+- `rkB/s`（Read kilobytes per second）：每秒读取的数据量（以 KB 为单位）。
+- `wkB/s`（Write kilobytes per second）：每秒写入的数据量（以 KB 为单位）。
+- `avgrq - sz`（Average request size）：平均每次 I/O 请求的数据大小（以扇区为单位）。
+- `avgqu - sz`（Average queue size）：平均 I/O 请求队列长度。
+- `await`（Average wait time）：平均每个 I/O 请求的等待时间（包括等待队列时间和服务时间，单位为毫秒）。
+- `r_await`（Average read wait time）：平均读请求等待时间（单位为毫秒）。
+- `w_await`（Average write wait time）：平均写请求等待时间（单位为毫秒）。
+- `svctm`（Service time）：平均每次 I/O 服务时间（单位为毫秒）。
+- `%util`：设备的 I/O 利用率，表示设备在一秒内有百分之多少的时间有 I/O 操作。
 
 你可以通过这个命令了解系统整体的磁盘 I/O 状况。
+
+![image-20241217145805424](../../md/img/image-20241217145805424.png)
 

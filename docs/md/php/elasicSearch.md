@@ -942,6 +942,221 @@ class MyElasticSearch
 
 
 
+在 Elasticsearch 中，`text` 字段的分词器（analyzer）是非常重要的，它决定了文本是如何被分解为词项（tokens）并存储在倒排索引中的。除了 `ik_max_word` 分词器外，Elasticsearch 还提供了多种不同的分词器，你可以根据具体的需求选择合适的分词器。下面是一些常见的分词器和它们的适用场景。
+
+### 1. **`ik_smart` 分词器**
+
+`ik_smart` 是 IK 分词器的另一种配置，它与 `ik_max_word` 不同，`ik_smart` 更倾向于使用 **智能切分**，即分词时会更加注重关键词的精准切分，较少产生一些无意义的词项。
+
+- 特点
+
+  ：
+
+  - 适用于对分词结果要求较少的情况，通常适用于短文本和需要精准匹配的场景。
+  - `ik_smart` 会生成较少的词项，相比 `ik_max_word` 分词器，`ik_smart` 的粒度较粗，切分的结果更少。
+
+- **适用场景**：对于长文本的检索性能较好，适用于搜索时需要匹配的关键词较为精确的场景（例如人名、地点、产品名称等）。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => ['type' => 'text', 'analyzer' => 'ik_smart']
+```
+
+### 2. **`standard` 分词器**
+
+`standard` 是 Elasticsearch 默认的分词器，它基于 Unicode 字符分隔符来将文本拆分成词项。它将文本按空格、标点符号等分隔符分开，适用于英语等以空格为主要分隔符的语言。
+
+- 特点
+
+  ：
+
+  - 默认分词器，适用于多种语言，但对于中文、日文等没有明确分隔符的语言，效果较差。
+  - 会按照标准的分词规则（包括空格、标点符号等）进行分词。
+
+- **适用场景**：适用于英语和其他语言的文本分析，适合基于单词的分词。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => ['type' => 'text', 'analyzer' => 'standard']
+```
+
+### 3. **`whitespace` 分词器**
+
+`whitespace` 分词器仅通过空格字符分割文本，适合处理没有标点符号或其他分隔符的文本。
+
+- 特点
+
+  ：
+
+  - 仅以空格为分隔符进行分词。
+  - 比 `standard` 分词器简单，不会处理其他标点符号。
+
+- **适用场景**：当你希望完全按照空格来分隔文本时，适合那些单纯以空格分割单词的文本。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => ['type' => 'text', 'analyzer' => 'whitespace']
+```
+
+### 4. **`keyword` 分词器**
+
+`keyword` 分词器不会对文本进行分词处理，直接将文本作为一个整体存储。这种分词器适用于不需要分词的字段，如 ID、标签、状态码等。
+
+- 特点
+
+  ：
+
+  - 不会分词，直接使用原始字符串进行存储。
+  - 适用于需要精确匹配的字段，如用户 ID、电子邮件、URL 等。
+
+- **适用场景**：适合存储不需要分析的字段，如精确匹配的值。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => ['type' => 'keyword']
+```
+
+### 5. **`pattern` 分词器**
+
+`pattern` 分词器基于正则表达式来分割文本。你可以自定义正则表达式来决定分词规则。
+
+- 特点
+
+  ：
+
+  - 可以根据用户定义的正则表达式来分词。
+  - 非常灵活，可以根据特定的规则对文本进行分割。
+
+- **适用场景**：当文本需要根据特定规则（例如某些字符、数字、标点等）进行分词时，使用 `pattern` 分词器可以满足复杂的需求。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => [
+    'type' => 'text',
+    'analyzer' => 'pattern',
+    'pattern' => '\\s|,|;|:'
+]
+```
+
+### 6. **`ngram` 和 `edge_ngram` 分词器**
+
+`ngram` 和 `edge_ngram` 分词器是针对 **前缀匹配** 和 **模糊搜索** 场景的分词器。
+
+- **ngram 分词器**：将文本拆分为所有可能的连续字符组合，适合做模糊搜索、拼音搜索等。
+- **edge_ngram 分词器**：与 `ngram` 相似，但它只会生成文本开头的子串（前缀），适用于前缀匹配场景。
+
+**ngram 分词器的特点**：
+
+- 会将文本拆分为任意长度的子串，适合做拼音搜索、模糊匹配。
+- 查询时可能会增加查询的匹配宽度，导致性能问题。
+
+**edge_ngram 分词器的特点**：
+
+- 仅对文本前缀进行分词，非常适合进行前缀匹配搜索。
+- 它会从文本的开头生成一个或多个 n-grams，适用于自动补全和拼音搜索。
+
+**适用场景**：适用于需要进行前缀匹配、自动补全、拼音搜索等场景。
+
+**示例**：
+
+```
+php
+
+
+复制代码
+'name' => [
+  'type' => 'text',
+  'analyzer' => 'edge_ngram_analyzer'
+]
+```
+
+### 7. **`custom` 分词器**
+
+除了内置的分词器外，Elasticsearch 还支持自定义分词器。你可以根据需要选择不同的分词器和过滤器来构建适合自己需求的分词策略。
+
+**自定义分词器的特点**：
+
+- 你可以通过设置不同的 **tokenizer** 和 **filter** 来创建自己独特的分词器。
+- 常用的自定义过滤器包括：`lowercase`、`stop`、`synonym`、`edge_ngram` 等。
+
+**适用场景**：适合处理具有特定需求的文本分析，如同义词替换、分词过滤、大小写转换等。
+
+**示例**：
+
+```
+json
+
+
+复制代码
+"settings": {
+  "analysis": {
+    "tokenizer": {
+      "custom_tokenizer": {
+        "type": "standard"
+      }
+    },
+    "filter": {
+      "custom_filter": {
+        "type": "lowercase"
+      }
+    },
+    "analyzer": {
+      "custom_analyzer": {
+        "type": "custom",
+        "tokenizer": "custom_tokenizer",
+        "filter": ["custom_filter"]
+      }
+    }
+  }
+}
+```
+
+### 总结
+
+除了 `ik_max_word` 和 `ik_smart` 外，Elasticsearch 还支持多种分词器，包括：
+
+- `standard`：标准分词器，适用于大部分英文文本。
+- `whitespace`：仅根据空格分词，适用于简单的分词需求。适合 tag_ids 多标签 ids 可以是空格分词
+- `keyword`：不分词，适用于需要精确匹配的字段。
+- `pattern`：基于正则表达式进行分词，适用于有特定规则的文本。
+- `ngram` 和 `edge_ngram`：适用于前缀匹配、模糊搜索、自动补全等场景。
+- `custom`：自定义分词器，允许你根据需要定制分析过程。
+
+你可以根据自己的需求选择合适的分词器，并结合不同的分词器、过滤器和自定义分析器来实现更加精细的文本分析。
+
+
+
+standard 分词器 默认
+
+![image-20250114102430403](/Users/zwl/Documents/github/note/docs/md/img/image-20250114102430403.png)
+
+
+
 6.3查询文档
 
 进行分词查询，可以进行中文分词查询。
@@ -959,6 +1174,103 @@ class MyElasticSearch
 
 
 ### 7搜索的常用语法
+
+
+
+####  **IK 分词器的分词粒度**
+
+**IK 分词器**是 ElasticSearch 中常用的中文分词插件，支持两种模式：
+
+- **智能分词 (smart mode)**：尽可能以词语为单位分词，生成较大的分词粒度。例如："苹果手机" 分为 ["苹果", "手机"]。
+- **细粒度分词 (max_word mode)**：尽可能多地拆分，生成更细的分词粒度。例如："苹果手机" 分为 ["苹", "果", "苹果", "手", "机", "手机"]。
+
+为了支持单个字的搜索，需要使用 **细粒度分词**。
+
+
+
+一般使用smart mode即可 ，但如果有些需要搜索单个字的，可以 使用细粒度分词，设置为ik_max_word即可
+
+```
+protected $_es_field = [
+        'name' => ['type' => 'text', "analyzer" => "ik_max_word"],
+        //'name' => ['type' => 'text'],
+        'id_card' => ['type' => 'text'],
+        'phone'   => ['type' => 'text'],
+        'level'                      => ['type' => 'byte'],
+        'age'                        => ['type' => 'integer'],
+        'guide_type'                 => ['type' => 'byte'],
+        'first_become_time'          => ['type' => 'integer'],
+        'tag_ids'                    => ['type' => 'text', "analyzer" => "whitespace"],
+        'community'                  => ['type' => 'long'],
+        'instructor_id'              => ['type' => 'integer'],
+        'member_id'                  => ['type' => 'integer'],
+    ];
+```
+
+如下name 搜索一个 文字，就可以搜索出张文林和李文军。
+
+```
+url:https://14.17.80.135:9200/zw_social_sports_instructor/_search GET
+
+参数:'{"from":0,"size":10,"query":{"bool":{"filter":[{"term":{"province":"36"}},{"bool":{"should":[{"match":{"name":"文"}}]}},{"term":{"is_del":2}},{"term":{"company_id":"718"}}]}},"sort":{"instructor_id":"desc"}}'
+[info] 2024-12-11 11:09:17 <papa-f84bf2ce8464b86eb281e4b18d0a5b5d> [message] 耗时:0.1041
+
+返回结果(200):{
+"took":2,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":null,
+
+"hits":[{"_index":"zw_social_sports_instructor","_id":"196607","_score":null,"_source":{"name":"李文军","id_card":"532401197408010313","phone":"16612345678","level":0,"age":50,"guide_type":1,"education_level":9,"nation":1,"gender":1,"personnel_form":3,"now_level_grant_time":1701100800,"first_become_time":1699632000,"tag_ids":"2436","company_id":718,"organ_unit_id":2017,"organ_unit_company_area_id":"36","operator":3118,"is_del":2,"province":36,"city":3604,"county":360481,"street":360481001,"community":360481001001,"instructor_id":196607,"member_id":0},"sort":[196607]},
+
+{"_index":"zw_social_sports_instructor","_id":"196605","_score":null,"_source":{"name":"张文林","id_card":"44132319971015531X","phone":"15976123893","level":3,"age":27,"guide_type":2,"education_level":1,"nation":1,"gender":1,"personnel_form":1,"now_level_grant_time":0,"first_become_time":1733068800,"tag_ids":"2476","company_id":718,"organ_unit_id":0,"organ_unit_company_area_id":"36","operator":900004209,"is_del":2,"province":36,"city":3604,"county":360481,"street":360481001,"community":360481001001,"instructor_id":196605,"member_id":31981},"sort":[196605]}]}
+
+}
+
+
+```
+
+
+
+1查看分词后的结果
+
+#### 1.2 查看文档的分析结果
+
+你可以使用 `_analyze` API 来查看一个特定的文本字段（如 `name`）是如何被分词器分析的。这有助于确认分词器是否正确地将 `"李四玲"` 分解为多个词项。
+
+例如，你可以用以下请求来分析 `name` 字段的内容：
+
+```
+bash
+
+
+复制代码
+GET /your_index_name/_analyze
+{
+  "text": "李四玲",
+  "field": "name"
+}
+```
+
+如果你使用的是 `ik_max_word` 分词器，返回的结果应该包含多个词项，如：
+
+```
+json
+
+
+复制代码
+{
+  "tokens": [
+    { "token": "李", "start_offset": 0, "end_offset": 1, "type": "word", "position": 1 },
+    { "token": "四", "start_offset": 1, "end_offset": 2, "type": "word", "position": 2 },
+    { "token": "玲", "start_offset": 2, "end_offset": 3, "type": "word", "position": 3 },
+    { "token": "李四", "start_offset": 0, "end_offset": 2, "type": "word", "position": 1 },
+    { "token": "四玲", "start_offset": 1, "end_offset": 3, "type": "word", "position": 2 },
+    { "token": "李四玲", "start_offset": 0, "end_offset": 3, "type": "word", "position": 1 }
+  ]
+}
+```
+
+如果 `ik_max_word` 分词器工作正常，你应该看到 `"李"` 被作为一个独立的词项列出，此外还会有 `"李四"`, `"四玲"`, `"李四玲"` 等词项。如果你没有看到 `"李"` 作为独立的词项，那么可能是分词器配置的问题，或者你查询的字段和实际索引的字段不一致。
+
+
 
 参考url：https://www.cnblogs.com/yjf512/p/4897294.html
 
@@ -1021,6 +1333,50 @@ term完全匹配。
 ![image-20210725110539265](../img/image-20210725110539265.png)
 
 
+
+#### 扩展 使用和mysql的like查询一模一样的模糊查询方式
+
+1. name 使用keyword 类型去存储 和 然后搜索时使用 wildcard 
+
+2. ```
+   protected $_es_field = [
+   //        'name' => ['type' => 'text', "analyzer" => "ik_max_word"],
+           'name' => ['type' => 'keyword'],
+           //'name' => ['type' => 'text'],
+   
+           'id_card' => ['type' => 'text'],
+           'phone'   => ['type' => 'text'],
+   
+         
+       ];
+   ```
+
+3. ```
+    if (isset($search["keyword"]) && !empty($search["keyword"])) {
+   
+               $query['bool']['filter'][] = [
+                   'bool' => ['should' => [
+                       //match
+   //                    array('match_phrase' => ['name' =>  $search["keyword"]])
+   //                    array('match' => ['name' =>  $search["keyword"]]), //不能使用，如果关键词是多个，会出现不按顺序的情况
+   
+   
+                       array('wildcard' => ['name' =>  '*' .$search["keyword"]. '*']),//
+                       array('wildcard' => ['id_card' => '*' . $search["keyword"] . '*']),
+                       array('wildcard' => ['phone' => '*' . $search["keyword"] . '*'])
+                   ]]
+               ];
+   
+           }
+   ```
+
+   
+
+#### 数据量比较大时，不推荐
+
+
+
+数据量比较大时，推荐ik_smart 或者 ik_max_word
 
 
 

@@ -596,6 +596,10 @@ mysql主从模式默认是异步复制的。什么是异步复制？
 
 
 
+
+
+
+
 ## 21.1主从延迟方式
 
 主从延迟方案排查。
@@ -1564,7 +1568,90 @@ MySQL 8.0 支持多种全文分词器，主要包括：
 
    你也可以在创建表时指定分词器和相关参数。
 
-2. **创建全文索引时指定分词器**：
+
+
+##### 也可以设置单个分词，也能做，但不推荐，
+
+```
+
+ngram 是一种基于固定长度的子串分词方式，它会将字符串拆分为固定长度的连续片段。对于中文分词，通常会设置 n=1, 2, 3，从而支持粒度为单字、双字或三字的分词。
+
+例如：
+
+输入："苹果手机"
+n=1（单字分词）：["苹", "果", "手", "机"]
+n=2（双字分词）：["苹果", "果手", "手机"]
+2. MySQL 的 FULLTEXT 索引与 ngram 分词
+MySQL 从 5.7.6 开始，支持 InnoDB 表上的中文全文检索，ngram 分词器是其中一个重要选项。
+
+配置 ngram 分词支持
+在创建 FULLTEXT 索引时，可以指定 ngram 分词器：
+
+sql
+复制代码
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    FULLTEXT(name) WITH PARSER ngram
+) ENGINE=InnoDB;
+3. 单字搜索的关键配置
+要支持中文单字搜索，n-gram 分词需要满足以下条件：
+
+3.1 设置 ngram 的最小粒度为 1
+MySQL 的 ngram 分词器默认支持 n=2 到 n=3，这意味着不能直接索引单字。如果需要支持单字搜索，需要修改 innodb_ft_min_token_size 配置。
+
+在 MySQL 配置文件（如 my.cnf）中添加：
+
+ini
+复制代码
+[mysqld]
+innodb_ft_min_token_size = 1
+修改完成后，重启 MySQL 服务，使配置生效。
+
+3.2 重新生成 FULLTEXT 索引
+修改配置后，必须删除并重新创建全文索引才能生效：
+
+sql
+复制代码
+ALTER TABLE products DROP INDEX name;
+ALTER TABLE products ADD FULLTEXT(name) WITH PARSER ngram;
+4. 插入数据和单字搜索示例
+插入数据
+sql
+复制代码
+INSERT INTO products (name) VALUES ('苹果手机');
+INSERT INTO products (name) VALUES ('果汁饮料');
+INSERT INTO products (name) VALUES ('手机壳');
+搜索单字
+使用 MATCH ... AGAINST 执行单字搜索：
+
+sql
+复制代码
+SELECT * FROM products
+WHERE MATCH(name) AGAINST('果' IN NATURAL LANGUAGE MODE);
+结果：
+
+
+6. 注意事项
+6.1 索引大小
+设置 innodb_ft_min_token_size=1 会导致索引变大，因为中文每个字符都会作为一个 token 进行索引。
+
+6.2 噪音问题
+单字搜索可能返回过多不相关结果，因此：
+
+可以结合其他字段（如分类、品牌）过滤结果。
+配置停用词（Stop Words）以减少无意义的单字匹配。
+
+6.3 性能问题
+单字搜索会增加查询的计算量，尤其是在大数据量场景下。因此，推荐结合缓存机制或者搜索推荐系统引导用户输入更多字词。
+
+总结
+通过配置 MySQL 的 ngram 分词器并调整 innodb_ft_min_token_size=1，可以支持中文单字搜索。实际应用中，为了优化搜索体验，可以结合 BOOLEAN MODE 和字段权重，以及限制结果集的大小。对于更复杂的中文分词需求，可以考虑使用 Elasticsearch 等专业搜索引擎。
+```
+
+
+
+1. **创建全文索引时指定分词器**：
 
    ```
    sql
@@ -1579,7 +1666,7 @@ MySQL 8.0 支持多种全文分词器，主要包括：
    ) ENGINE=InnoDB;
    ```
 
-3. **修改已有表的全文索引**：
+2. **修改已有表的全文索引**：
 
    如果表已经存在，可以通过以下方式修改全文索引以使用 ngram 分词器：
 

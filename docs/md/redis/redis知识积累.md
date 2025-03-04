@@ -8,6 +8,12 @@ key值在redis下，可以keys code:*可以模糊查询key值。
 
 
 
+
+
+![image-20241226093531652](../../md/img/image-20241226093531652.png)
+
+
+
 ### **1.** ***\*字符串\****
 
 简单的key=>value.存一个字段的值
@@ -41,6 +47,309 @@ hmset User:id:1 user 张三 age 20
 ```
 
 ***\*Hmset一次性设置哈希多个值.\****
+
+
+
+- **键（Key）**：Redis 哈希类型的主键，表示一个具体的哈希表。
+- **字段（Field）**：哈希表中的字段名。
+- **值（Value）**：每个字段对应的值。
+
+示例结构：
+
+```
+plaintext
+
+
+复制代码
+user:1001 {
+    "name": "Alice",
+    "age": "25",
+    "city": "New York"
+}
+```
+
+------
+
+### **常用命令**
+
+#### **1. 设置字段值**
+
+```
+plaintext
+
+
+复制代码
+HSET key field value
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HSET user:1001 name Alice
+HSET user:1001 age 25
+HSET user:1001 city "New York"
+```
+
+#### **2. 获取字段值**
+
+```
+plaintext
+
+
+复制代码
+HGET key field
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HGET user:1001 name
+# 返回：Alice
+```
+
+#### **3. 获取所有字段和值**
+
+```
+plaintext
+
+
+复制代码
+HGETALL key
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HGETALL user:1001
+# 返回：
+# 1) "name"
+# 2) "Alice"
+# 3) "age"
+# 4) "25"
+# 5) "city"
+# 6) "New York"
+```
+
+#### **4. 检查字段是否存在**
+
+```
+plaintext
+
+
+复制代码
+HEXISTS key field
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HEXISTS user:1001 name
+# 返回：1（存在），0（不存在）
+```
+
+#### **5. 删除字段**
+
+```
+plaintext
+
+
+复制代码
+HDEL key field [field ...]
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HDEL user:1001 city
+```
+
+#### **6. 获取字段数量**
+
+```
+plaintext
+
+
+复制代码
+HLEN key
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HLEN user:1001
+# 返回：2
+```
+
+#### **7. 获取所有字段名**
+
+```
+plaintext
+
+
+复制代码
+HKEYS key
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HKEYS user:1001
+# 返回：
+# 1) "name"
+# 2) "age"
+```
+
+#### **8. 获取所有值**
+
+```
+plaintext
+
+
+复制代码
+HVALS key
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HVALS user:1001
+# 返回：
+# 1) "Alice"
+# 2) "25"
+```
+
+#### **9. 字段值自增**
+
+```
+plaintext
+
+
+复制代码
+HINCRBY key field increment
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HINCRBY user:1001 age 1
+# age 的值变为 26
+```
+
+#### **10. 设置字段值，仅当字段不存在**
+
+```
+plaintext
+
+
+复制代码
+HSETNX key field value
+```
+
+- **示例**：
+
+```
+plaintext
+
+
+复制代码
+HSETNX user:1001 country "USA"
+```
+
+------
+
+### **实际使用场景**
+
+1. **存储用户信息**
+
+   - 每个用户一个哈希表：
+
+     ```
+     plaintext
+     
+     
+     复制代码
+     user:1001 {
+         "name": "Alice",
+         "age": "25",
+         "city": "New York"
+     }
+     ```
+
+2. **商品库存管理**
+
+   - 使用商品 ID 作为字段，库存数量作为值：
+
+     ```
+     plaintext
+     
+     
+     复制代码
+     stock {
+         "item:1001": "50",
+         "item:1002": "30"
+     }
+     ```
+
+3. **配置存储**
+
+   - 存储系统配置选项：
+
+     ```
+     plaintext
+     
+     
+     复制代码
+     config {
+         "theme": "dark",
+         "language": "en",
+         "timezone": "UTC"
+     }
+     ```
+
+------
+
+### **注意事项**
+
+1. **字段数量限制**：一个哈希可以存储多达 2^32 个字段，但过多字段可能会导致内存问题。
+2. **适用场景**：哈希适用于存储少量键值对的对象。对于更复杂的结构，可以考虑使用 Redis JSON（需要扩展模块支持）。
+
+如果你有具体应用场景或需要进一步的例子，可以告诉我！
 
  
 

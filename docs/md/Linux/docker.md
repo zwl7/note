@@ -1095,6 +1095,9 @@ docker build -f dockerfile-centos -t wenlin-vim-net-centos .
 
 docker build -f Dockerfile -t ginskeleton:v20240913-1011 .
 
+
+activity-php-test
+
 ```
 
 ![image-20210905152521183](../img/image-20210905152521183.png)
@@ -1189,6 +1192,12 @@ docker tag a0b2433d1d39 registry.cn-hangzhou.aliyuncs.com/test_wenlin/php7-4-2:1
 docker tag a0b2433d1d39 registry.cn-hangzhou.aliyuncs.com/test_wenlin/php8-2-0:1.0
 docker tag db9c5b19bdbf registry.cn-hangzhou.aliyuncs.com/test_wenlin/go1-18-alpine3-16:v1.0
 docker tag d108cf5a2f84 registry.cn-hangzhou.aliyuncs.com/test_wenlin/information202405091507:v1.0
+
+docker tag 1ead4712a951 registry.cn-hangzhou.aliyuncs.com/test_wenlin/chatgpt-on-wechat:master
+
+docker push registry.cn-hangzhou.aliyuncs.com/test_wenlin/chatgpt-on-wechat:latest
+
+registry.cn-hangzhou.aliyuncs.com/test_wenlin/chatgpt-on-wechat:latest
 
 docker images
 
@@ -1680,6 +1689,14 @@ php-task-manage:
 
 
 
+需要停掉这个服务
+
+docker compose stop  php-task-manage
+
+然后docker compose up -d php-task-manage 重新启动这个服务。才行。
+
+
+
 #### 1. **重启单个服务**
 
 你可以使用 `docker-compose restart` 命令来重启特定的服务，而不影响其他服务。
@@ -1774,6 +1791,28 @@ docker-compose up -d --no-deps php-task-manage
 这样即使 `php-task-manage` 依赖于 `mysql` 和 `redis`，这些服务也不会被重启。
 
 docker-compose up --scale php-organ-unit=1
+
+
+
+
+
+#### 5. docker-compose  使用portainer页面去更新镜像
+
+打包好镜像
+
+![image-20250304095717753](../../md/img/image-20250304095717753.png)
+
+
+
+然后编辑容器
+
+![image-20250304095855927](/Users/zwl/Documents/github/note/docs/md/img/image-20250304095855927.png)
+
+然后更新镜像，在点击depoly 容器，即可。
+
+
+
+![image-20250304095928544](/Users/zwl/Documents/github/note/docs/md/img/image-20250304095928544.png)
 
 
 
@@ -2160,7 +2199,11 @@ CMD ["/app/start.sh", "-d"] # 容器run起来时，会执行的命令
 
 redis节点因为某些原因自己挂掉了，被docker-swarm重新启动了一个新的容器，然后新容器的网络ip变了，导致很多web服务，访问
 
+
+
 redis时网络不通了。可能出现这个情况，所以redis最好也不要使用docker部署。而且docker部署，redis效率比原生的redis效率慢(//待测试 docker部署的redis 和 原生的redis，效率差多少？
+
+
 
 
 
