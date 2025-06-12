@@ -1353,7 +1353,7 @@ term完全匹配。
 
 3. ```
     if (isset($search["keyword"]) && !empty($search["keyword"])) {
-   
+      
                $query['bool']['filter'][] = [
                    'bool' => ['should' => [
                        //match

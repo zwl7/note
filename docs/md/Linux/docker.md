@@ -1615,7 +1615,7 @@ $ docker-compose up nginx php mysql         # 创建并且启动nginx、php、my
 $ docker-compose up -d nginx php  mysql     # 创建并且已后台运行的方式启动nginx、php、mysql容器
 
 //启动新的容器，不会影响之前的容器服务。会自己构建镜像，然后自己run起来对应的容器。
-docker-compose up -d go-gin-skeleton  
+docker-compose up -d go-gin-skeleton   
 
 
 $ docker-compose start php                  # 启动服务
@@ -1785,7 +1785,7 @@ bash
 
 
 复制代码
-docker-compose up -d --no-deps php-task-manage
+docker-compose up -d --no-deps php-ppos-goods
 ```
 
 这样即使 `php-task-manage` 依赖于 `mysql` 和 `redis`，这些服务也不会被重启。

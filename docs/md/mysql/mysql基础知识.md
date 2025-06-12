@@ -1975,3 +1975,78 @@ fulltext索引 比较快
 
 
 
+
+
+## 43 int(1) 和 int(10) 有什么区别？
+
+
+
+我们知道在mysql中 int占4个字节，那么对于无符号的int，最大值是`2^32-1 = 4294967295`，将近40亿，难道用了`int(1)`，就不能达到这个最大值吗？
+
+```
+CREATE TABLE `user` (
+  `id` int(1) unsigned NOT NULL AUTO_INCREMENT,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+```
+
+id字段为无符号的`int(1)`，我来插入一个最大值看看。
+
+```
+mysql> INSERT INTO `user` (`id`) VALUES (4294967295);
+Query OK, 1 row affected (0.00 sec)
+```
+
+可以看到成功了，说明int后面的数字，不影响int本身支持的大小，`int(1)`、`int(2)`...`int(10)`没什么区别。
+
+
+
+
+
+## 零填充
+
+一般int后面的数字，配合zerofill一起使用才有效。先看个例子：
+
+```
+CREATE TABLE `user` (
+  `id` int(4) unsigned zerofill NOT NULL AUTO_INCREMENT,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+```
+
+注意`int(4)`后面加了个zerofill，我们先来插入4条数据。
+
+```
+mysql> INSERT INTO `user` (`id`) VALUES (1),(10),(100),(1000);
+Query OK, 4 rows affected (0.00 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+```
+
+分别插入1、10、100、1000 4条数据，然后我们来查询下：
+
+```
+mysql> select * from user;
++------+
+| id   |
++------+
+| 0001 |
+| 0010 |
+| 0100 |
+| 1000 |
++------+
+4 rows in set (0.00 sec)
+```
+
+通过数据可以发现 int(4) + zerofill实现了不足4位补0的现象，单单int(4)是没有用的。
+
+而且对于0001这种，底层存储的还是1，只是在展示的会补0。
+
+
+
+int后面的数字不能表示字段的长度，`int(num)`一般加上zerofill，才有效果。zerofill的作用一般可以用在一些编号相关的数字中，比如学生的编号 001 002 ... 999这种，如果mysql没有零填充的功能，但是你又要格式化输出等长的数字编号时，那么你只能自己处理了。
+
+
+
+
+
+![image-20250422154755337](/Users/zwl/Documents/github/note/docs/md/img/image-20250422154755337.png)

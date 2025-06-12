@@ -26,7 +26,7 @@ git reset --hard 279245daf1cf6ddd54f479d78b4099fa202b8354
 git reset --hard 668453431bd4dc95037af312d94122106437f7b6
 
 此命令只能回退。如果回退到指定的版本，拿到对应的代码之后。可以git pull拉取最新的代码。
-git reset --hard d2afbf997f314da1a686b81991a2148a80939f8a
+git reset --hard 25858a9e3cdcf115e352f33675d83d005f044be3
 git reset --hard 67b9fb1c2cc6554293c4e481d367bbdb302cc363
 
 
@@ -34,7 +34,7 @@ git reset --hard 67b9fb1c2cc6554293c4e481d367bbdb302cc363
 5e291e8765019c90103cd1f34c59882d050c5612
 
 //将回退的版本，推上github
-git push origin develop
+git push --force origin testing
 
 **git强制推送本地代码到远程仓库的develop分支**
 git push --force origin develop
