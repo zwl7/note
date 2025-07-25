@@ -894,11 +894,119 @@ service mysql start
 
 
 
-### 1.给某个表 添加字段 和 索引时，会锁表吗？
+### 1.锁表和不锁表的情况
 
 
 
-都不会锁表。
+1.1 不锁表的情况（可以更新记录，可以查询记录）
+
+
+
+1.1.1 新增字段，删除字段，
+
+1.1.2 新增索引,删除索引,增加字段的字符串长度 比如（name 的长度从原来的varchar（255）变成 varchar(500)） ，会造成cpu飙升和io飙升
+
+```
+name 的长度从原来的varchar（255）变成 varchar(500)
+
+ALTER TABLE `gin-test`.`users` 
+MODIFY COLUMN `name` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' AFTER `user_id`;
+```
+
+
+
+1.1.3 变更字段类型，比如从int变成bigint ，是非常危险的操作
+
+![image-20250725150647410](../../md/img/image-20250725150647410.png)
+
+如下图copy to tmp table 会触发表重建
+
+![image-20250725145821901](../../md/img/image-20250725145821901.png)
+
+```
+ALTER TABLE `gin-test`.`users` 
+MODIFY COLUMN `c_time` bigint NOT NULL DEFAULT 0 AFTER `u_time`;
+```
+
+
+
+ 结果：可以进行简单的查询，但是在事务中查询某条记录加悲观锁时，会阻塞，更新(update和 insert操作时)时会阻塞。
+
+
+
+
+
+使用gh-ost 工具 （一个online-ddl 工具，原理是新增一个影子表结构，然后把旧表的数据复制到影子表里面去，同时gh-ost工具会监听mysql的bin-log日志文件，去把旧表的数据变更，也写入影子表里面去，等完成这些操作呢，会把影子表重命名为user，然后删掉旧的users表,通过一条语句更新，这个操作是具有原子性的）
+
+
+
+Gh-ost
+
+
+
+前置条件，监听的数据库，开启了bin-log日志
+
+
+
+安装后会有一条指令
+
+
+
+![image-20250725184858834](/Users/zwl/Documents/github/note/docs/md/img/image-20250725184858834.png)
+
+
+
+
+
+然后给gh-ost 新增账号
+
+```sql
+CREATE USER 'gh-ost'@'%' IDENTIFIED BY 'mysqlP+ld+1K+Dz';
+
+GRANT SELECT, RELOAD, SHOW VIEW, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'gh-ost'@'%';
+GRANT SUPER ON *.* TO 'gh-ost'@'%';
+GRANT ALL PRIVILEGES ON `gin-test`.* TO 'gh-ost'@'%';
+
+FLUSH PRIVILEGES;
+
+SHOW GRANTS FOR 'gh-ost'@'%';
+```
+
+
+
+然后执行gh-ost命令
+
+```
+ gh-ost \
+  --max-load=Threads_running=50 \  #执行的线程数量
+  --critical-load=Threads_running=100 \   #执行的线程数量
+  --chunk-size=5000 \   # 批量操作的行数
+  --user="gh-ost" \
+  --password="mysqlP+ld+1K+Dz" \
+  --host="localhost" \
+  --database="gin-test" \
+  --table="users" \
+  --alter="MODIFY COLUMN name_int int NOT NULL DEFAULT 1 AFTER name" \   #执行的ddl语句
+  --switch-to-rbr \
+  --allow-on-master \   #允许在主库执行
+  --execute
+```
+
+![image-20250725185443740](/Users/zwl/Documents/github/note/docs/md/img/image-20250725185443740.png)
+
+
+
+即使执行的ddl是从tinyint 改成int，如果执行执行 alter table `gin-test`.`users` MODIFY COLUMN name_int int NOT NULL DEFAULT 1 AFTER name ，因为数据量比较大，执行时间会比较长，ddl执行期间users表是不能更新，插入，加锁查询的，但是使用gh-ost就可以。
+
+但是会查询大量bin-log日志，导致主从同步时，可能会比较慢，所以控制好g h-ost运行的速率也很重要。
+
+
+
+添加id-card索引时可以进行更新用户身份证，也可以查询用户数据
+
+![image-20250725141948695](../../md/img/image-20250725141948695.png)
+
+因为添加索引需要建立bree的索引结构，需要建立扫描全部
 
 
 
@@ -910,11 +1018,28 @@ service mysql start
 
 
 
-mysql 8.0.34 版本测试 有效。当表的数据有800w时，
+mysql 8.0.34 版本测试 有效。当表的数据有1000w时，
 
 添加了一个字段 只需要0.5s。
 
 添加一个索引需要42s。
+
+
+
+
+
+删除字段时也会导致cpu飙升
+
+```
+ALTER TABLE `gin-test`.`users` 
+DROP COLUMN `id_card`;
+```
+
+
+
+
+
+![image-20250725143543664](../../md/img/image-20250725143543664.png)
 
 
 
@@ -1963,7 +2088,7 @@ WHERE MATCH(title, content) AGAINST('优化*' IN BOOLEAN MODE);
 
 fulltext索引 比较快
 
-![image-20241022202733545](/Users/zwl/Documents/github/note/docs/md/img/image-20241022202733545.png)
+![image-20241022202733545](../../md/img/image-20241022202733545.png)
 
 
 
@@ -1971,7 +2096,7 @@ fulltext索引 比较快
 
 普通索引 稍微慢一点
 
-![image-20241022202759274](/Users/zwl/Documents/github/note/docs/md/img/image-20241022202759274.png)
+![image-20241022202759274](../../md/img/image-20241022202759274.png)
 
 
 
@@ -2049,4 +2174,4 @@ int后面的数字不能表示字段的长度，`int(num)`一般加上zerofill�
 
 
 
-![image-20250422154755337](/Users/zwl/Documents/github/note/docs/md/img/image-20250422154755337.png)
+![image-20250422154755337](../../md/img/image-20250422154755337.png)

@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package user;
+
+option go_package = "./;proto";
+
+service UserService{
+    ////用户列表
+    rpc GetUserList(GetUserListRequest) returns (GetUserListResponse);
+
+    //通过手机号查询用户
+    rpc GetUserByMobile(MobileRequest) returns (UserInfo);
+
+    //通过id查询用户
+    rpc GetUserById(UserIdRequest) returns (UserInfo);
+
+    //创建用户
+    rpc CreateUser(CreateUserInfo) returns (UserInfo);
+
+    //更新用户
+    rpc UpdateUser(UpdateUserInfo) returns (UserInfo);
+
+    //检查用户密码
+    rpc CheckPassWord(CheckPasswordRequest) returns (CheckPasswordResponse);
+
+    //删除用户
+    rpc DeleteUser(UserIdRequest) returns (google.protobuf.Empty);
+}
+
+message GetUserListRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+}
+
+
+message CreateUserInfo {
+    string name = 1;
+    string mobile = 2;
+    string password = 3;
+    string birthDay = 4;
+    string gender = 5;
+    uint32 role = 6;
+}
+
+message GetUserListResponse {
+    uint32 total = 1;
+    repeated UserInfo user = 2;
+}
+
+message UserInfo {
+    uint64 userId = 1;
+    string name = 2;
+    string mobile = 3;
+    string birthDay = 4;
+    string gender = 5;
+    uint32 role = 6;
+}
+
+message MobileRequest {
+    string mobile = 1;
+}
+
+message UserIdRequest {
+    uint64 userId = 1;
+}
+
+message UpdateUserInfo {
+    uint64 userId = 1;
+    string name = 2;
+    string mobile = 3;
+    
+    string password = 4;
+    string birthDay = 5;
+    string gender = 6;
+    uint32 role = 7;
+}
+
+message CheckPasswordRequest {
+    uint64 userId = 1;
+    string password = 2;
+}
+
+message CheckPasswordResponse {
+    bool success = 1;
+}
+

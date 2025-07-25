@@ -136,6 +136,99 @@ protoc -I=. --go_out=. --go-grpc_out=. helloworld.proto
 
 
 
+
+
+```protobuf
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package user;
+
+option go_package = "./;proto"; //导入路径;包名 
+
+service UserService{
+    ////用户列表
+    rpc GetUserList(GetUserListRequest) returns (GetUserListResponse);
+
+    //通过手机号查询用户
+    rpc GetUserByMobile(MobileRequest) returns (UserInfo);
+
+    //通过id查询用户
+    rpc GetUserById(UserIdRequest) returns (UserInfo);
+
+    //创建用户
+    rpc CreateUser(CreateUserInfo) returns (UserInfo);
+
+    //更新用户
+    rpc UpdateUser(UpdateUserInfo) returns (UserInfo);
+
+    //检查用户密码
+    rpc CheckPassWord(CheckPasswordRequest) returns (CheckPasswordResponse);
+
+    //删除用户
+    rpc DeleteUser(UserIdRequest) returns (google.protobuf.Empty);
+}
+
+message GetUserListRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+}
+
+
+message CreateUserInfo {
+    string name = 1;
+    string mobile = 2;
+    string password = 3;
+}
+
+message GetUserListResponse {
+    uint32 total = 1;
+    repeated UserInfo user = 2;
+}
+
+message UserInfo {
+    uint64 userId = 1;
+    string name = 2;
+    string mobile = 3;
+    string birthDay = 4;
+    string gender = 5;
+    string role = 6;
+}
+
+message MobileRequest {
+    string mobile = 1;
+}
+
+message UserIdRequest {
+    uint32 userId = 1;
+}
+
+message UpdateUserInfo {
+    uint64 userId = 1;
+    string name = 2;
+    string mobile = 3;
+    
+    string password = 4;
+    string birthDay = 5;
+    string gender = 6;
+    string role = 7;
+}
+
+message CheckPasswordRequest {
+    uint64 userId = 1;
+    string password = 2;
+}
+
+message CheckPasswordResponse {
+    bool success = 1;
+}
+
+
+```
+
+![image-20250711172544400](/Users/zwl/Documents/github/note/docs/md/img/image-20250711172544400.png)
+
 ## 实操
 
 
@@ -208,6 +301,14 @@ repeated 关键字在 protobuf 中非常有用，可以在数据结构中存储�
 
 
 
+protoc -I=. --go_out=. user.proto
+
+```bash
+protoc -I=. --go_out=. --go_opt=Mprotos/buzz.proto=example.com/project/protos/fizz \
+```
+
+
+
 ![image-20241113151134482](/Users/zwl/Documents/github/note/docs/md/img/image-20241113151134482.png)
 
 `protoc` 是 Protocol Buffers 编译器，用于将 `.proto` 文件编译生成不同语言的代码，比如 Go、Java、Python 等。以下是常见的 `protoc` 命令用法：
@@ -232,6 +333,8 @@ protoc -I=<proto文件路径> --<语言>_out=<输出路径> <proto文件>
 
 ```
 protoc -I . --go_out=. --go-grpc_out=. proto/helloworld.proto
+
+protoc -I . --go_out=. user.proto
 
 
 --go_out=. 生成普通的go普通的proto代码 

@@ -1210,6 +1210,8 @@ docker push registry.cn-hangzhou.aliyuncs.com/test_wenlin/information20240509150
 hub.wesais.cn/arm64-ppos-v3/information-platform 
 docker push hub.wesais.cn/arm64-ppos-v3/information-platform:202407012030
 
+docker push hub.wesais.cn/arm64-ppos-v3/ppos-coupon:20250716.1130
+
 
 registry.cn-hangzhou.aliyuncs.com/test_wenlin/papa-php7-3:v1.3.3
 registry.cn-hangzhou.aliyuncs.com/test_wenlin/redis-test-commit:v1.0
@@ -1647,6 +1649,12 @@ $ docker-compose down                       # 停止并删除容器，网络，�
 docker compose up -d --scale php-organ-unit=3
 
 新增一个容器,直接 docker-compose up -d php-test即可
+
+
+
+新启动一个service  假设新的服务是php-ppos-statistic
+
+docker compose up -d php-ppos-statistic
 
 ![image-20231229150007527](../img/image-20231229150007527.png)
 
