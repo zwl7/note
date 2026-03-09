@@ -297,21 +297,91 @@ CREATE TABLE `ppospro_qrcode` (
 ```
 
 ```sql
-//
-CREATE TABLE `ppospro_qrcode_batch` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '序号',
-  `business_id` int NOT NULL DEFAULT '0' COMMENT '商户ID',
-  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司ID',
-  `qrcode_batch_id` int NOT NULL DEFAULT '0' COMMENT '二维码ID',
-  `qrcode_batch_no` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码批次号',
-  `qrcode_batch_name` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码批次名称',
-  `bind_count` int NOT NULL DEFAULT '0' COMMENT '已绑定数量',
-  `no_bind_count` int NOT NULL DEFAULT '0' COMMENT '未绑定数量',
-  `qrcode_create_time` int NOT NULL DEFAULT '0' COMMENT '编码生成时间',
-  `c_time` int NOT NULL DEFAULT '0' COMMENT '数据录入时间',
-  `u_time` int NOT NULL DEFAULT '0' COMMENT '数据最后更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `qrcode_batch_id` (`qrcode_batch_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='设备资产管理-二维码批次表';
+SELECT 
+  `app_id`, 
+  `business_id`, 
+  `stadium_id`, 
+  `stadium_name`, 
+  `stadium_sync_id`, 
+  `sync_code`, 
+  `api_code`, 
+  `province_id`, 
+  `city_id`, 
+  `county_id`, 
+  `latitude`, 
+  `longitude`, 
+  `address`, 
+  `name`, 
+  `phone`, 
+  `legal_name`, 
+  `yd_area`, 
+  `jz_area`, 
+  `swcd_area`, 
+  `sncd_area`, 
+  `seat_num`, 
+  `property_unit`, 
+  `operating_unit`, 
+  `top_director_unit`, 
+  `set_up_year`, 
+  `invest_total`, 
+  `system_type`, 
+  `stadium_type`, 
+  `images`, 
+  `des`, 
+  `is_enable`, 
+  `is_early_warning`, 
+  `is_core_area`, 
+  `last_sync_time`, 
+  `appid`, 
+  `service_name`, 
+  `business_name`, 
+  `login_info`, 
+  `c_time`, 
+  `u_time` 
+FROM `ppospro_stadium` 
+WHERE app_id = 10101 
+  AND province_id = 530000 
+ORDER BY `id` DESC;
+
+
+SELECT 
+    `app_id`, 
+    `camera_detail_id`, 
+    `stadium_id`, 
+    `record_conn_id`, 
+    `platform_id`, 
+    `device_id`, 
+    `conn_data`, 
+    `date_str`, 
+    `total_in_count`, 
+    `total_out_count`, 
+    `c_time`, 
+    `u_time` 
+FROM 
+    `ppospro_sync_passenger_camera_record` 
+WHERE 
+    `stadium_id` IN (1884,9789,1883,1882,1881,541,540,539,538,861,859,829,828,817,816,815,813,812,811,809,808,807,806,805,804,803,802,801,799,798,797,796,795,794,793,792,791,789,786,785,774,773,772,771,769,768,767,766,765,764,763,757,756,755,754,753,752,751,749,748,747,746,745,744,743,742,741,739,738,737,736,735,734,733,732,731,729,728,727,726,725,724,723,722,721,719,718,717,716,715,714,713,712,711,709,708,707,706,705,704,703,702,701,699,698,697,696,695,694,693,692,691,689,688,687,686,685,684,683,682,681,679,678,677,676,675,674,673,672,671,669,668,667,666,665,664,663,662,661,659,658,656,645,536,535,528,481,479,405,365,347,344,325,323,321,309,303,302,301,299,298,293,292,291,287,286,268,267,255,254,253,218,146,145,144,143,142,81,72,71,69,68,67,47,44) 
+    AND (date_str = '20260305') 
+LIMIT 10000;
+
+
+
+SELECT 
+    a.`app_id`, 
+    a.`camera_detail_id`, 
+    a.`stadium_id`, 
+    a.`record_conn_id`, 
+    a.`platform_id`, 
+    a.`device_id`, 
+    a.`conn_data`, 
+    a.`date_str`, 
+    a.`total_in_count`, 
+    a.`total_out_count`, 
+    a.`c_time`, 
+    a.`u_time` 
+FROM 
+    `ppospro_sync_passenger_camera_record` as a join  ppospro_stadium as b on a.stadium_id = b.stadium_id
+    where b.province_id = 530000 and a.date_str = 20260305
+LIMIT 10000;
 ```
 

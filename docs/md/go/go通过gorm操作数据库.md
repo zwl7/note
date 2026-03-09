@@ -96,6 +96,211 @@ func InitMySQL() error {
 
 
 
+```go
+package model
+
+import (
+	"go-all-new/mxshop_srvs/inventory_srv/database/mysql"
+	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+func NewInventory() *Inventory {
+	return &Inventory{}
+}
+
+// Inventory 库存模型
+type Inventory struct {
+	BaseModel
+	GoodsId uint64 `gorm:"column:goods_id;type:int;not null;default:0" json:"goods_id"`
+	Num     int64  `gorm:"column:num;type:int;not null;default:0" json:"num"`
+	Version int64  `gorm:"column:version;type:int;not null;default:0" json:"version"`
+}
+
+// BeforeCreate GORM钩子：创建前设置时间
+func (table *Inventory) BeforeCreate(tx *gorm.DB) error {
+	now := time.Now()
+	table.AddTime = &now
+	table.UpdateTime = &now
+	return nil
+}
+
+// BeforeUpdate GORM钩子：更新前设置时间
+func (table *Inventory) BeforeUpdate(tx *gorm.DB) error {
+	now := time.Now()
+	table.UpdateTime = &now
+	return nil
+}
+
+// bool 表示是否存在记录
+func (table *Inventory) GetByGoodsId(id uint64, db *gorm.DB) (error, bool) {
+	if db == nil {
+		db = mysql.DB
+	}
+	result := db.Where("goods_id = ?", id).First(table)
+
+	//log.Println("<insert>", errors.Is(result.Error, gorm.ErrRecordNotFound), "+++")
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		} else {
+			return result.Error, false
+		}
+	}
+	return nil, true
+}
+
+// bool 表示是否存在记录
+func (table *Inventory) GetByGoodsIdWithLock(id uint64, lock bool, db *gorm.DB) (error, bool) {
+	if db == nil {
+		db = mysql.DB
+	}
+	result := db.Where("goods_id = ?", id)
+
+	if lock {
+		result = result.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	result.First(table)
+	//log.Println("<insert>", errors.Is(result.Error, gorm.ErrRecordNotFound), "+++")
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, false
+		} else {
+			return result.Error, false
+		}
+	}
+	return nil, true
+}
+
+func (table *Inventory) Create(db *gorm.DB) error {
+	if db == nil {
+		db = mysql.DB
+	}
+
+	result := db.Create(&table)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (table *Inventory) Update(db *gorm.DB) error {
+	if db == nil {
+		db = mysql.DB
+	}
+	result := db.Save(&table)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+// update goods set num = num + ? where goods_id = ?
+func (table *Inventory) UpdateGoodsNum(num int64, db *gorm.DB) error {
+	if db == nil {
+		db = mysql.DB
+	}
+	result := db.Model(table).Where("goods_id = ?", table.GoodsId).Update("num", gorm.Expr("num + ?", num))
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+// update goods set num = num + ? where goods_id = ?
+func (table *Inventory) UpdateGoodsNumWithVersion(num int64, version int64, db *gorm.DB) error {
+	if db == nil {
+		db = mysql.DB
+	}
+	result := db.Table("inventory").Where("goods_id = ?", table.GoodsId).Where("version = ?", version).Updates(map[string]interface{}{
+		"num":     gorm.Expr("num + ?", num), // num = num + (-1)
+		"version": gorm.Expr("version + 1"),  // version = version + 1
+	})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+
+
+```
+
+```go
+func (InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*emptypb.Empty, error) {
+
+	// 循环里面调用扣减库存，开启事务 悲观锁的机制
+	db := mysql.DB.Begin()
+	for _, v := range req.GoodsInvInfo {
+
+		InventoryModel := model.NewInventory()
+
+		err, ok := InventoryModel.GetByGoodsIdWithLock(v.GoodsId, true, db)
+		if err != nil {
+			db.Rollback()
+			return nil, err
+		}
+		if !ok {
+			db.Rollback()
+			return nil, status.Errorf(codes.NotFound, "商品id:"+strconv.FormatUint(v.GoodsId, 10)+"商品库存不存在")
+		}
+
+		// 判断库存是否足够
+		if InventoryModel.Num < v.Num {
+			db.Rollback()
+			return nil, status.Errorf(codes.NotFound, "商品id:"+strconv.FormatUint(v.GoodsId, 10)+"商品库存不足")
+		}
+
+		// 扣减库存  后续这里要使用锁机制来保证库存的正确性，否则并发情况下会有问题
+		err = InventoryModel.UpdateGoodsNum(-v.Num, db)
+		if err != nil {
+			db.Rollback()
+			return nil, err
+		}
+	}
+
+	db.Commit()
+	return &emptypb.Empty{}, nil
+}
+
+// 乐观锁的机制
+func (InventoryServer) SellWithVersion(ctx context.Context, req *proto.SellInfo) (*emptypb.Empty, error) {
+
+	// 不开启事务
+
+	for _, v := range req.GoodsInvInfo {
+
+		InventoryModel := model.NewInventory()
+
+		err, ok := InventoryModel.GetByGoodsId(v.GoodsId, nil)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, status.Errorf(codes.NotFound, "商品id:"+strconv.FormatUint(v.GoodsId, 10)+"商品库存不存在")
+		}
+
+		// 判断库存是否足够
+		if InventoryModel.Num < v.Num {
+			return nil, status.Errorf(codes.NotFound, "商品id:"+strconv.FormatUint(v.GoodsId, 10)+"商品库存不足")
+		}
+
+		//UpdateGoodsNumWithVersion
+		//扣减库存  后续这里要使用锁机制来保证库存的正确性，否则并发情况下会有问题
+		err = InventoryModel.UpdateGoodsNumWithVersion(-v.Num, InventoryModel.Version, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+}
+```
+
+
+
 # CRUD
 
 CRUD通常指数据库的增删改查操作，本文详细介绍了如何使用GORM实现创建、查询、更新和删除操作。

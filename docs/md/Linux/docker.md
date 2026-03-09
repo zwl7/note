@@ -462,9 +462,14 @@ docker inspect 容器id
 ```
 # 命令 docker cp 容器id:容器内路径 目的主机路径
 # linux复制查看，是否复制成功 
-[root@kuangshen ~]# docker cp c8530dbbe3b4:/home/f1 /home 
+[root@kuangshen ~]# docker cp 188859ceb7ad:/app /Users/zwl/dnmp/www/backend/papa/rizhao/online 
 [root@kuangshen ~]# cd /home 
 [root@kuangshen home]# ls
+
+docker cp 1acb2421ca5e:/app /Users/zwl/dnmp/www/backend/papa/yunnanPhp/newYunNan/docker-copy
+
+docker cp 2101c89cc579:/app /Users/zwl/dnmp/www/backend/papa/yunnanPhp/newYunNan/docker-copy
+
 ```
 
 ![image-20210902222925458](../img/image-20210902222925458.png)
@@ -1207,8 +1212,11 @@ docker push registry.cn-hangzhou.aliyuncs.com/test_wenlin/php7-4-27:v2.0
 
 docker push registry.cn-hangzhou.aliyuncs.com/test_wenlin/information202405091507:v1.0
 
+
+
 hub.wesais.cn/arm64-ppos-v3/information-platform 
 docker push hub.wesais.cn/arm64-ppos-v3/information-platform:202407012030
+docker push hub.wesais.cn/arm64-ppos-v3/information-platform:20250815.1753
 
 docker push hub.wesais.cn/arm64-ppos-v3/ppos-coupon:20250716.1130
 
@@ -1216,7 +1224,14 @@ docker push hub.wesais.cn/arm64-ppos-v3/ppos-coupon:20250716.1130
 registry.cn-hangzhou.aliyuncs.com/test_wenlin/papa-php7-3:v1.3.3
 registry.cn-hangzhou.aliyuncs.com/test_wenlin/redis-test-commit:v1.0
 
+docker tag 96868d9fa38f registry.cn-hangzhou.aliyuncs.com/test_wenlin/nginx:1.27-alpine
 
+
+docker push registry.cn-hangzhou.aliyuncs.com/test_wenlin/dream-ai-backend:20260301
+
+docker pull registry.cn-hangzhou.aliyuncs.com/test_wenlin/dream-ai-backend:20260301
+
+docker tag nginx:1.27-alpine registry.cn-hangzhou.aliyuncs.com/test_wenlin/nginx:1.27-alpine-amd64
 ```
 
 ![image-20230605154656710](../img/image-20230605154656710.png)
@@ -2215,7 +2230,17 @@ redis时网络不通了。可能出现这个情况，所以redis最好也不要�
 
 
 
+29
 
+**cadvisor**：容器资源指标来源
+
+
+
+**Prometheus**：指标的 “数据库 + 搜索引擎”
+
+**Loki**：日志的 “数据库 + 搜索引擎”
+
+**Grafana**：最终给人看的 “仪表盘”
 
 
 

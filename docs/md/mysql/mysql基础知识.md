@@ -2175,3 +2175,175 @@ int后面的数字不能表示字段的长度，`int(num)`一般加上zerofill�
 
 
 ![image-20250422154755337](../../md/img/image-20250422154755337.png)
+
+
+
+## 44.多字段复杂排序
+
+
+
+```
+我现在有个需求，我有一个活动的mysql表，这是我的ddl
+CREATE TABLE `platform_train_activity` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `train_activity_id` int NOT NULL DEFAULT '0' COMMENT '表id',
+  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司id',
+  `operator` int NOT NULL DEFAULT '0' COMMENT '操作人id',
+  `organ_unit_id` int NOT NULL DEFAULT '0' COMMENT '机构单位id',
+  `cover_img` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '培训活动封面',
+  `promote_name` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '培训名称',
+  `train_start_time` int NOT NULL DEFAULT '0' COMMENT '培训开始时间',
+  `train_end_time` int NOT NULL DEFAULT '0' COMMENT '培训结束时间',
+  `province` int NOT NULL DEFAULT '0' COMMENT '省',
+  `city` int NOT NULL DEFAULT '0' COMMENT '市',
+  `county` int NOT NULL DEFAULT '0' COMMENT '区县',
+  `address` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '详细地址',
+  `lat` decimal(10,6) NOT NULL DEFAULT '0.000000' COMMENT '维度',
+  `lng` decimal(10,6) NOT NULL DEFAULT '0.000000' COMMENT '经度',
+  `tag_ids` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '培训项目',
+  `contact_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '联系人',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '手机号码',
+  `main_hold_unit` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '主办单位',
+  `help_hold_unit` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '协办单位',
+  `real_hold_unit` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '承办单位',
+  `train_type` tinyint(1) NOT NULL DEFAULT '1' COMMENT '培训类型：1晋级培训，2技能培训, 3=校园培训',
+  `promote_level` tinyint(1) NOT NULL DEFAULT '3' COMMENT '晋级级别：0国家级，1一级，2二级，3三级',
+  `wx_is_show` tinyint(1) NOT NULL DEFAULT '1' COMMENT '微信端是否可见：1是，2否',
+  `wx_is_apply` tinyint(1) NOT NULL DEFAULT '1' COMMENT '微信端是否报名：1是，2否',
+  `apply_start_time` int NOT NULL DEFAULT '0' COMMENT '报名开始时间',
+  `apply_end_time` int NOT NULL DEFAULT '0' COMMENT '报名结束时间',
+  `allow_apply_level` varchar(800) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '允许报名的指导员级别,多选则逗号隔开：0国家级，1一级，2二级，3三级',
+  `allow_apply_tag_ids` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '允许报名的当前指导项目',
+  `is_del` tinyint(1) NOT NULL DEFAULT '2' COMMENT '是否删除，1是，2否',
+  `c_time` int NOT NULL DEFAULT '0' COMMENT '添加时间戳',
+  `u_time` int NOT NULL DEFAULT '0' COMMENT '修改时间戳',
+  `street` int NOT NULL DEFAULT '0' COMMENT '街道id',
+  `allow_apply_num` int NOT NULL DEFAULT '0' COMMENT '微信报名人数限制',
+  `allow_apply_num_leave` int unsigned NOT NULL DEFAULT '0' COMMENT '可报名的名额数量',
+  `organ_unit_company_area_id` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '所属区域id',
+  `field_info` varchar(1000) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '报名字段类型 json',
+  `is_fill_instructor_info` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否填写指导员基本资料：1=是，0=否,默认1',
+  `school_subject_id` int NOT NULL DEFAULT '0' COMMENT '校园专题id，从数据字典来',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `unindex` (`train_activity_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=151 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='社体模块-培训活动表';
+
+
+```
+
+我需要在首页把活动列表跟进活动状态进行我指定逻辑的排序，比如，活动状态总共有5个，分别是 报名未开始，报名中，报名截止，活动进行中，活动结束
+
+报名未开始就是当前时间比apply_start_time小。报名中是当前时间比报名apply_start_time大，同时比apply_end_time小。报名截止就是当前时间比apply_end_time大，同时比train_start_time小。活动进行中就是当前时间比train_start_time大，同时比train_end_time小，活动已结束就是当前时间比train_end_time大。
+
+现在我需要列表中展示的特定的排序逻辑，排序逻辑的优先级从高往低排是:报名中，活动进行中，报名未开始，报名截止，活动已结束
+
+
+
+第一个方案，直接使用mysql的函数，和 case when条件判断去排序。
+
+对应mysql的话，可以这样写sql
+
+```sql
+SELECT 
+train_activity_id,
+    promote_name,
+		apply_start_time,
+		apply_end_time,
+		train_start_time,
+		train_end_time,
+    FROM_UNIXTIME(apply_start_time, '%Y-%m-%d %H:%i:%s') AS apply_start_time_str,
+    FROM_UNIXTIME(apply_end_time, '%Y-%m-%d %H:%i:%s') AS apply_end_time_str,
+    FROM_UNIXTIME(train_start_time, '%Y-%m-%d %H:%i:%s') AS train_start_time_str,
+    FROM_UNIXTIME(train_end_time, '%Y-%m-%d %H:%i:%s') AS train_end_time_str
+FROM 
+    platform_train_activity
+ORDER BY 
+    -- 按照状态优先级排序：报名中 > 活动进行中 > 报名未开始 > 报名截止 > 活动已结束
+    CASE 
+        -- 报名中：当前时间在报名开始和结束之间
+        WHEN UNIX_TIMESTAMP() > apply_start_time AND UNIX_TIMESTAMP() < apply_end_time THEN 1
+        -- 活动进行中：当前时间在培训开始和结束之间
+        WHEN UNIX_TIMESTAMP() > train_start_time AND UNIX_TIMESTAMP() < train_end_time THEN 2
+        -- 报名未开始：当前时间早于报名开始时间
+        WHEN UNIX_TIMESTAMP() < apply_start_time THEN 3
+        -- 报名截止：当前时间晚于报名结束但早于培训开始
+        WHEN UNIX_TIMESTAMP() > apply_end_time AND UNIX_TIMESTAMP() < train_start_time THEN 4
+        -- 活动已结束：当前时间晚于培训结束时间
+        WHEN UNIX_TIMESTAMP() > train_end_time THEN 5
+        -- 其他情况（如时间未设置）放在最后
+        ELSE 6
+    END ASC,
+		train_activity_id desc
+		LIMIT 40,10
+```
+
+
+
+第二个方案，新增一个排序字段，每用一个定时任务，每分钟去更新对应的状态，然后排序时，直接根据字段去排序。
+
+这个方案效率比较高效，但是不能实时。
+
+
+
+第三个方案 把数据写入elasicSearch中，用es去实现复杂排序的逻辑
+
+其实原理和mysql的case when类似，但是查询速度会比mysql高，数据量在2w时，mysql平均用时45ms，es平均30ms。大概快15%左右。
+
+```json
+{
+  "from": 40,
+  "size": 10,
+  "sort": [
+    {
+      "_script": {
+        "type": "number",
+        "script": {
+          "source": "long now = new Date().getTime() / 1000; long applyStart = doc['apply_start_time'].value; long applyEnd = doc['apply_end_time'].value; long trainStart = doc['train_start_time'].value; long trainEnd = doc['train_end_time'].value; if (now > applyStart && now < applyEnd) { return 1; } else if (now > trainStart && now < trainEnd) { return 2; } else if (now < applyStart) { return 3; } else if (now > applyEnd && now < trainStart) { return 4; } else if (now > trainEnd) { return 5; } else { return 6; }",
+          "lang": "painless"
+        },
+        "order": "asc"
+      }
+    },
+    {
+    "train_activity_id": {
+      "order": "desc"
+    }
+  }
+  ],
+  "fields": [
+    "promote_name",
+    "apply_start_time",
+    "apply_end_time",
+    "train_start_time",
+    "train_end_time"
+  ],
+  "script_fields": {
+    "apply_start_time_str": {
+      "script": {
+        "source": "def ts = doc['apply_start_time'].value; return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(ts * 1000))",
+        "lang": "painless"
+      }
+    },
+    "apply_end_time_str": {
+      "script": {
+        "source": "def ts = doc['apply_end_time'].value; return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(ts * 1000))",
+        "lang": "painless"
+      }
+    },
+    "train_start_time_str": {
+      "script": {
+        "source": "def ts = doc['train_start_time'].value; return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(ts * 1000))",
+        "lang": "painless"
+      }
+    },
+    "train_end_time_str": {
+      "script": {
+        "source": "def ts = doc['train_end_time'].value; return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(ts * 1000))",
+        "lang": "painless"
+      }
+    }
+  },
+  "_source": false
+}
+```
+
