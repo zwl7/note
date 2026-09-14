@@ -719,7 +719,7 @@ CMD /bin/bash
 ：x
 
 #buile 根据dockerfile打包镜像，注意最后有个.
-docker build -f /home/docker-test-volume/dockerfile01 -t wenlin/centos .
+docker build -t lifeAgent:20260822 .
 ```
 
 ![image-20210905101724447](../img/image-20210905101724447.png)
@@ -1095,6 +1095,7 @@ CMD /bin/bash
 docker build -f dockerfile地址 -t 新镜像名字:TAG .
 
 docker build -f Dockerfile -t ginskeleton:v20240105-1540 .
+docker build -f Dockerfile -t lifeagent:v20260819-1806 .
 
 docker build -f dockerfile-centos -t wenlin-vim-net-centos .
 
@@ -1192,9 +1193,12 @@ docker login --username=xiao hub.wesais.cn
 
 
 login success
+
+docker buildx build --push --platform linux/amd64 -t registry.cn-hangzhou.aliyuncs.com/test_wenlin/life:20260821.1815 .
 docker tag 7aff770ba801 registry.cn-hangzhou.aliyuncs.com/test_wenlin/php7-4-27:2.0
 docker tag a0b2433d1d39 registry.cn-hangzhou.aliyuncs.com/test_wenlin/php7-4-2:1.0
 docker tag a0b2433d1d39 registry.cn-hangzhou.aliyuncs.com/test_wenlin/php8-2-0:1.0
+docker tag 93db1e4f7846 registry.cn-hangzhou.aliyuncs.com/test_wenlin/mysql8:8.0.34
 docker tag db9c5b19bdbf registry.cn-hangzhou.aliyuncs.com/test_wenlin/go1-18-alpine3-16:v1.0
 docker tag d108cf5a2f84 registry.cn-hangzhou.aliyuncs.com/test_wenlin/information202405091507:v1.0
 

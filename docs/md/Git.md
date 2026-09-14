@@ -18,7 +18,7 @@ git config --global user.email ""
 
 git reset --hard HEAD^
 git reset --hard HEAD^
-git reset --hard ac9ecca4ba258f5d97dd223cc48105af6a9b7b33
+git reset --hard 9a67bb7f72b0ce83c91f2f20ff8f8846b6ff1cf8
 git reset --hard 279245daf1cf6ddd54f479d78b4099fa202b8354
 
 git reset --hard 967bdcf356ec5d89a44f691283529741656782c1
@@ -27,13 +27,13 @@ git reset --hard 967bdcf356ec5d89a44f691283529741656782c1
 
 668453431bd4dc95037af312d94122106437f7b6
 
-git reset --hard 668453431bd4dc95037af312d94122106437f7b6
+git reset --hard c5c27b65d985ed1256676fb484096e583773ebc5
 
 此命令只能回退。如果回退到指定的版本，拿到对应的代码之后。可以git pull拉取最新的代码。
 git reset --hard 25858a9e3cdcf115e352f33675d83d005f044be3
 git reset --hard a0fea770a46d354856d89eeade9a6349719ad41f
 
-
+git reset --hard 7850b440415e273bbfe3089cac78e4e2d398f569
 
 6a6110aa08456e5c8fb16537eb358701d264d57b
 
@@ -47,7 +47,11 @@ git push --force origin testing
 **git强制推送本地代码到远程仓库的develop分支**
 git push --force origin develop
 
+git push origin develop
+
 git push --force origin master
+
+git push origin master
 
 取消当前的commit提交
 git reset --soft HEAD^

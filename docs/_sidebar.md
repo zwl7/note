@@ -1,11 +1,14 @@
 * 简介
   * [简介](md/test.md)
-* 编程语言(PHP,Go)
+* 编程
   * [AI]
-    * [1.ai工具](md/ai/ai工具.md)
-    * [2.ai编程](md/ai/ai编程.md)
-    * [3.prompt提示词](md/ai/prompt.md)
-    * [4.GPTs和agent](md/ai/gpts)
+    * [1.claudeCode](md/ai/everythink claude code使用心得.md)
+    * [2.loopEngineer](md/ai/loop engineer.md)
+    * [3.promptEngineer](md/ai/prompt.md)
+    * [4.RAG](md/ai/rag.md)
+    * [5.ai编程](md/ai/ai编程.md)
+    * [6.prompt提示词](md/ai/prompt.md)
+    * [7.GPTs和agent](md/ai/gpts)
   * PHP
     * [swoole]
       * [1.swoole入门](md/swoole/swoole入门.md)

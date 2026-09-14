@@ -1,65 +1,18 @@
-# Headline
+# 知识库中的Headline
 
 > 记录自己与编程的爱恨情仇
 
 
 
-```sql
-CREATE TABLE `platform_instructor_site` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司id',
-  `province` int NOT NULL DEFAULT '0' COMMENT '省',
-  `city` int NOT NULL DEFAULT '0' COMMENT '市',
-  `county` int NOT NULL DEFAULT '0' COMMENT '区县',
-  `street` int NOT NULL DEFAULT '0' COMMENT '街道',
-  `address` varchar(500) NOT NULL DEFAULT '0' COMMENT '详细地址',
-  `instructor_site_id` int NOT NULL DEFAULT '0' COMMENT '指导员站点ID',
-  `operator` int NOT NULL DEFAULT '0' COMMENT '操作人id',
-  `organ_unit_id` int NOT NULL DEFAULT '0' COMMENT '机构单位id',
-  `is_del` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除，1=是，0=否',
-  `lat` decimal(10,6) NOT NULL DEFAULT '0.000000' COMMENT '维度',
-  `lng` decimal(10,6) NOT NULL DEFAULT '0.000000' COMMENT '经度',
-  `sport_tag_ids` varchar(255) NOT NULL DEFAULT '0' COMMENT '服务项目ID，可多选',
-  `name` varchar(255) NOT NULL DEFAULT '0' COMMENT '站点名称',
-  `no` varchar(100) NOT NULL DEFAULT '0' COMMENT '站点编号',
-  `service_time` varchar(500) NOT NULL DEFAULT '0' COMMENT '服务时间',
-  `itude_address` varchar(255) NOT NULL DEFAULT '0' COMMENT '经纬度地址',
-  `detail_address` varchar(255) NOT NULL DEFAULT '0' COMMENT '详细地址',
-  `charge_person` varchar(50) NOT NULL DEFAULT '0' COMMENT '负责人',
-  `contact_phone` varchar(50) NOT NULL DEFAULT '0' COMMENT '联系电话',
-  `des` varchar(2000) NOT NULL DEFAULT '0' COMMENT '详细介绍',
-  `images` varchar(1000) NOT NULL DEFAULT '0' COMMENT '图片,多个则逗号拼接',
-  `sity_type` tinyint NOT NULL DEFAULT '0' COMMENT '站点类型',
-  `love` int NOT NULL DEFAULT '0' COMMENT '收藏或关注数量',
-  `instructor_num` int NOT NULL DEFAULT '0' COMMENT '站点指导员数量',
-  `instructor_num` int NOT NULL DEFAULT '0' COMMENT '站点活动数量',
-  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态 1=审核中，2=发布，3=下架',
-  `u_time` int NOT NULL DEFAULT '0' COMMENT '修改时间戳',
-  `c_time` int NOT NULL DEFAULT '0' COMMENT '添加时间戳',
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `instructor_site_id` (`instructor_site_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='社体指导员模块-指导员站点';
-```
+---
 
 
-
-```sql
-
-```
-
-```sql
-CREATE TABLE `platform_instructor_relate_site_map` (
-  `id` int NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `company_id` int NOT NULL DEFAULT '0' COMMENT '公司id',
-  `instructor_relate_site_map` int NOT NULL DEFAULT '0' COMMENT '记录id',
-  `instructor_id` int NOT NULL DEFAULT '0' COMMENT '指导员id',
-  `member_id` int NOT NULL DEFAULT '0' COMMENT '用户id',
-  `instructor_site_id` int NOT NULL DEFAULT '0' COMMENT '指导员站点ID',
-  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '审核状态 1=审核中，2=审核通过，3=审核驳回，默认1',
-  `u_time` int NOT NULL DEFAULT '0' COMMENT '修改时间戳',
-  `c_time` int NOT NULL DEFAULT '0' COMMENT '添加时间戳',
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `instructor_relate_site_map` (`instructor_relate_site_map`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC COMMENT='社体指导员模块-站点和指导员关联表';
-```
-
+| [debug] 2026-07-10 09:32:28 <sys-68-686a504bacd14ec> [message] /activityPlatform/wxAdv/getAdvsByIdssql总耗时:0.00399 |      |                                                              |      |
+| ------------------------------------------------------------ | ---- | ------------------------------------------------------------ | ---- |
+|                                                              |      | [debug] 2026-07-10 09:32:28 <sys-68-686a504bacd14ec> [message] /activityPlatform/wxAdv/getAdvsByIds请求耗时:0.0087 |      |
+|                                                              |      | sys-67-676a504bdcedda0--[info] 2026-07-10 09:33:16 <sys-67-676a504bdcedda0> [message] 请求路径：/activityPlatform/wxAdv/getAdvsByIds--content-type：application/x-www-form-urlencoded; charset=UTF-8--蓝绿环境标识：green--请求参数：{"account_id":"125182","account_type":"32","adv_ids":"36","app_id":"10101","business_id":"0","city_id":"3100","company_id":"421","is_authenticate":"0","latitude":"31.2304","longitude":"121.4737","member_id":"125182","mp_id":"4","nonce_str":"2cv3ul2u27pfpgz6xhlpf1hsx0zkoizq","personnel_id":"125182","status":"1","union_token":"56bda8b7eafb6e5efa90813be8e28fde"} |      |
+|                                                              |      | [debug] 2026-07-10 09:33:16 <sys-67-676a504bdcedda0> [message] /activityPlatform/wxAdv/getAdvsByIdssql总耗时:0.00339 |      |
+|                                                              |      | [debug] 2026-07-10 09:33:16 <sys-67-676a504bdcedda0> [message] /activityPlatform/wxAdv/getAdvsByIds请求耗时:0.0073 |      |
+|                                                              |      | sys-74-746a504ea6ebe02--[info] 2026-07-10 09:45:10 <sys-74-746a504ea6ebe02> [message] 请求路径：/activityPlatform/wxAdv/getAdvsByIds--content-type：application/x-www-form-urlencoded; charset=UTF-8--蓝绿环境标识：green--请求参数：{"account_id":"53013","account_type":"32","adv_ids":"36","app_id":"10101","business_id":"0","city_id":"3100","company_id":"421","is_authenticate":"0","latitude":"31.2306","longitude":"121.4834","member_id":"53013","mp_id":"4","nonce_str":"ctxl2vv7368rgz5bxi2ca3ipxqzu8wmb","personnel_id":"53013","status":"1","union_token":"6d7c583cf2eb34e30303bdf8de9e40b4"} |      |
+|                                                              |      | [debug] 2026-07-10 09:45:10 <sys-74-746a504ea6ebe02> [message] /activityPlatform/wxAdv/getAdvsByIdssql总耗时:0.0043 |      |
+|                                                              |      | [debug] 2026-07-10 09:45:10 <sys-74-746a504ea6ebe02> [message] /activityPlatform/wxAdv/getAdvsByIds请求耗时:0.0091 |      |
