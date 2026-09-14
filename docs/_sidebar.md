@@ -1,7 +1,5 @@
-* 简介
-  * [简介](md/test.md)
 * 编程
-  * [AI]
+  * AI
     * [1.claudeCode](md/ai/everythingClaudeCode使用心得.md)
     * [2.loopEngineer](md/ai/loopEngineer.md)
     * [3.promptEngineer](md/ai/prompt.md)
