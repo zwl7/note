@@ -2,8 +2,8 @@
   * [简介](md/test.md)
 * 编程
   * [AI]
-    * [1.claudeCode](md/ai/everythink claude code使用心得.md)
-    * [2.loopEngineer](md/ai/loop engineer.md)
+    * [1.claudeCode](md/ai/everythingClaudeCode使用心得.md)
+    * [2.loopEngineer](md/ai/loopEngineer.md)
     * [3.promptEngineer](md/ai/prompt.md)
     * [4.RAG](md/ai/rag.md)
     * [5.ai编程](md/ai/ai编程.md)
